@@ -1,0 +1,754 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Up the Ant</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Young+Serif&family=Figtree:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+/* Layout: one-column phone app; sticky header + tabs; route drawn as a river ribbon down the left of each stop */
+:root{
+  --bg:#EAF0ED; --surface:#F8FBF9; --ink:#12262B; --muted:#4D6266; --line:#C7D5D0;
+  --river:#1E6A74; --river-soft:#D3E6E6; --reed:#5F7027; --sail:#9C5A1A; --sail-soft:#F2E2CF;
+  --plum:#74466A; --sky:#3F7A9E; --slate:#3A525C; --onacc:#FFFFFF;
+  --good:#2F7A3B; --good-soft:#DCEFD9; --bad:#A3322A; --bad-soft:#F6DCD8;
+  --f-display:"Young Serif", Georgia, "Times New Roman", serif;
+  --f-body:"Figtree", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-mono:"IBM Plex Mono", ui-monospace, Menlo, monospace;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){:root{
+  --bg:#0C1719; --surface:#132326; --ink:#E2ECE8; --muted:#9AAFAD; --line:#25393C;
+  --river:#62B4BC; --river-soft:#183338; --reed:#A9BA62; --sail:#E39C58; --sail-soft:#332415;
+  --plum:#C58BB6; --sky:#79B2D6; --slate:#8FA9B3; --onacc:#0C1719;
+  --good:#7CCB86; --good-soft:#18301C; --bad:#F08A80; --bad-soft:#3A1C19; color-scheme:dark}}
+
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:16px;line-height:1.55;-webkit-text-size-adjust:100%}
+.wrap{max-width:720px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+h1,h2,h3{font-family:var(--f-display);font-weight:400;text-wrap:balance;line-height:1.15;margin:0}
+p{margin:0}
+button,input{font:inherit;color:inherit}
+button{cursor:pointer}
+button:focus-visible,summary:focus-visible,input:focus-visible{outline:2px solid var(--river);outline-offset:2px}
+[hidden]{display:none!important}
+.eyebrow{font-family:var(--f-mono);font-size:11.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
+.muted{color:var(--muted)}
+
+header.top{position:sticky;top:0;z-index:5;background:var(--bg);border-bottom:1px solid var(--line);padding-top:env(safe-area-inset-top,0px)}
+.top .wrap{padding-block:12px 0}
+.brand h1{font-size:26px}
+nav.tabs{display:flex;gap:4px;margin-top:10px}
+nav.tabs button{flex:1;background:none;border:0;border-bottom:3px solid transparent;padding:10px 4px 9px;font-weight:600;color:var(--muted);font-size:15px}
+nav.tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--sail)}
+main{padding-block:24px 64px}
+section.view{display:flex;flex-direction:column;gap:28px}
+
+.lede{font-size:17px;max-width:62ch}
+.facts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.fact{border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:var(--surface)}
+.fact b{display:block;font-family:var(--f-display);font-weight:400;font-size:20px;color:var(--river)}
+.fact span{font-size:12.5px;line-height:1.4;display:block;color:var(--muted)}
+.windy{display:flex;gap:12px;align-items:flex-start;border-radius:10px;padding:14px 16px;background:var(--sail-soft)}
+.windy svg{flex:none;margin-top:3px;color:var(--sail)}
+.windy p{font-size:14.5px}
+
+.route{display:flex;flex-direction:column}
+.stop{display:grid;grid-template-columns:44px minmax(0,1fr);column-gap:10px}
+.rail{position:relative}
+.rail::before{content:"";position:absolute;left:19px;top:0;bottom:0;width:6px;background:var(--river);opacity:.85}
+.stop:first-child .rail::before{top:22px}
+.stop:last-child .rail::before{bottom:calc(100% - 22px)}
+.stop.ant .rail::before{background:var(--sky)}
+.stop.dyke .rail::before{background:var(--reed)}
+.node{position:absolute;left:10px;top:12px;width:24px;height:24px;border-radius:50%;background:var(--surface);border:4px solid var(--river);display:grid;place-items:center;font-family:var(--f-mono);font-size:10px}
+.stop.ant .node{border-color:var(--sky)}
+.stop.dyke .node{border-color:var(--reed)}
+.river-label{font-family:var(--f-mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);padding:4px 0 10px}
+.card{padding-bottom:22px;min-width:0}
+.card details{border:1px solid var(--line);border-radius:12px;background:var(--surface);overflow:hidden}
+.card summary{list-style:none;padding:12px 16px;cursor:pointer;display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
+.card summary::-webkit-details-marker{display:none}
+.card summary h3{font-size:21px}
+.card summary .sub{font-size:14px;color:var(--muted);margin-top:3px}
+.chev{flex:none;margin-top:6px;transition:transform .2s;color:var(--muted)}
+details[open] .chev{transform:rotate(180deg)}
+.body{padding:14px 16px 16px;display:flex;flex-direction:column;gap:14px;border-top:1px solid var(--line)}
+.body h4{margin:0 0 4px;font-family:var(--f-mono);font-weight:500;font-size:11.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--river)}
+.body p{font-size:15px;max-width:65ch}
+.trivia{border-left:3px solid var(--sail);padding:4px 0 4px 12px}
+.trivia h4{color:var(--sail)}
+.tags{display:flex;flex-wrap:wrap;gap:6px}
+.tag{font-size:12.5px;padding:3px 9px;border-radius:999px;background:var(--river-soft)}
+
+.panel{border:1px solid var(--line);border-radius:12px;background:var(--surface);padding:16px}
+.panel h2{font-size:22px;margin-bottom:4px}
+.panel > p{color:var(--muted);font-size:14.5px;margin-bottom:12px}
+dl.gloss{display:grid;grid-template-columns:max-content minmax(0,1fr);gap:8px 14px;margin:0}
+dl.gloss dt{font-weight:700}
+dl.gloss dd{margin:0;color:var(--muted)}
+.spot{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px}
+.spot label{display:flex;gap:10px;align-items:flex-start;padding:8px 10px;border-radius:8px;border:1px solid var(--line);font-size:14.5px;cursor:pointer}
+.spot label small{display:block;color:var(--muted);font-size:12.5px}
+.spot input{margin-top:4px;accent-color:var(--river)}
+.spot label:has(input:checked){background:var(--river-soft);border-color:var(--river)}
+
+/* buttons & chips */
+.btn{border-radius:10px;padding:11px 16px;font-weight:700;border:1px solid var(--line);background:var(--surface)}
+.btn.primary{background:var(--river);color:var(--onacc);border-color:var(--river)}
+.btn.sail{background:var(--sail);color:var(--onacc);border-color:var(--sail)}
+.btn.small{padding:7px 12px;font-size:14px}
+.btn:disabled{opacity:.4;cursor:default}
+.linkbtn{background:none;border:0;padding:0;color:var(--river);font-weight:600;text-decoration:underline;text-underline-offset:3px}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:7px 13px;font-size:14px;font-weight:600}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.row2{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.grow{flex:1}
+
+/* quiz */
+.who{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.who b{font-family:var(--f-display);font-weight:400;font-size:20px}
+.banner{border-radius:10px;padding:12px 14px;background:var(--sail-soft);font-size:14.5px;display:flex;flex-direction:column;gap:8px}
+.qcard{border-radius:14px;background:var(--surface);border:1px solid var(--line);padding:20px;display:flex;flex-direction:column;gap:14px}
+.qmeta{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.qnum{font-family:var(--f-mono);font-size:13px;color:var(--muted)}
+.qtext{font-family:var(--f-display);font-size:23px;line-height:1.25;text-wrap:balance}
+.opts{display:flex;flex-direction:column;gap:8px}
+.opt{display:grid;grid-template-columns:30px minmax(0,1fr) auto;gap:10px;align-items:center;text-align:left;border:1.5px solid var(--line);background:var(--bg);border-radius:10px;padding:11px 12px;font-size:16px;font-weight:500}
+.opt .L{font-family:var(--f-mono);font-size:13px;width:26px;height:26px;border-radius:50%;display:grid;place-items:center;border:1px solid var(--line);background:var(--surface)}
+.opt.sel{border-color:var(--river);background:var(--river-soft)}
+.opt.sel .L{background:var(--river);color:var(--onacc);border-color:var(--river)}
+.opt.right{border-color:var(--good);background:var(--good-soft)}
+.opt.right .L{background:var(--good);color:var(--onacc);border-color:var(--good)}
+.opt.wrong{border-color:var(--bad);background:var(--bad-soft)}
+.opt:disabled{cursor:default}
+.opt .who-picked{font-size:12px;color:var(--muted);text-align:right}
+.fact-box{border-radius:10px;background:var(--river-soft);padding:12px 14px;font-size:14.5px}
+.verdict{font-family:var(--f-display);font-size:22px}
+.verdict.good{color:var(--good)} .verdict.bad{color:var(--bad)}
+.answered{display:flex;flex-wrap:wrap;gap:6px}
+.answered span{font-size:13px;padding:3px 10px;border-radius:999px;border:1px solid var(--line);color:var(--muted)}
+.answered span.in{background:var(--river);border-color:var(--river);color:var(--onacc)}
+.waiting{text-align:center;padding:26px 10px;display:flex;flex-direction:column;gap:6px;align-items:center}
+.waiting .boat{animation:bob 2.4s ease-in-out infinite;color:var(--river)}
+@keyframes bob{0%,100%{transform:translateY(0) rotate(-3deg)}50%{transform:translateY(-5px) rotate(3deg)}}
+.board{display:flex;flex-direction:column;gap:6px}
+.brow{display:grid;grid-template-columns:22px minmax(0,1fr) auto;gap:10px;align-items:center;padding:9px 12px;border-radius:10px;border:1px solid var(--line);background:var(--surface)}
+.brow .pos{font-family:var(--f-mono);font-size:12px;color:var(--muted)}
+.brow .nm{font-weight:600}
+.brow .sc{font-family:var(--f-mono);font-size:20px;font-variant-numeric:tabular-nums}
+.brow.lead{border-color:var(--sail)}
+.brow.me .nm::after{content:" (you)";font-weight:400;color:var(--muted)}
+
+.host{border:2px dashed var(--sail);border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:14px}
+.host h3{font-size:20px}
+.qlist{display:flex;flex-direction:column;gap:6px}
+.qrow{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:center;padding:8px 10px;border-radius:8px;border:1px solid var(--line);background:var(--surface);font-size:14px}
+.qrow.live{border-color:var(--river);background:var(--river-soft)}
+.qrow .st{font-family:var(--f-mono);font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.field{display:flex;gap:8px;flex-wrap:wrap}
+.field input{flex:1;min-width:0;border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:var(--bg);font-family:var(--f-mono);text-transform:uppercase}
+.note{font-size:13.5px;color:var(--muted)}
+.codeout{font-family:var(--f-mono);font-size:24px;letter-spacing:.04em;text-align:center;padding:16px;border-radius:12px;background:var(--surface);border:2px solid var(--river);user-select:all;overflow-wrap:anywhere}
+.offq{display:flex;flex-direction:column;gap:6px;padding:12px 0;border-bottom:1px solid var(--line)}
+.offq p{font-weight:600}
+.offq .opts{gap:6px}
+.offq .opt{padding:8px 10px;font-size:15px}
+
+/* helm */
+.helm{display:flex;flex-direction:column;align-items:center;gap:18px}
+.wheelbox{position:relative;width:min(320px,86vw);aspect-ratio:1;max-width:100%}
+.wheelbox canvas{width:100%;height:100%;display:block}
+.pointer{position:absolute;left:50%;top:-6px;transform:translateX(-50%);width:0;height:0;border-left:14px solid transparent;border-right:14px solid transparent;border-top:24px solid var(--ink)}
+.result{text-align:center;min-height:84px}
+.result .eyebrow{display:block}
+.result h2{font-size:40px;color:var(--sail)}
+.crew{display:flex;flex-wrap:wrap;gap:6px;justify-content:center}
+.crew button{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:6px 12px;font-size:14px;font-weight:600;display:flex;gap:6px;align-items:center}
+.crew button[aria-pressed="false"]{opacity:.45;text-decoration:line-through}
+.crew .sw{width:10px;height:10px;border-radius:50%}
+.toggle{display:flex;gap:8px;align-items:center;font-size:14.5px}
+.toggle input{accent-color:var(--river);width:18px;height:18px}
+.log{width:100%}
+.log ol{list-style:none;margin:0;padding:0}
+.log li{display:flex;justify-content:space-between;gap:12px;padding:9px 2px;border-bottom:1px solid var(--line);font-size:15px}
+.log time{font-family:var(--f-mono);font-size:12.5px;color:var(--muted);font-variant-numeric:tabular-nums}
+.tally{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:13.5px;color:var(--muted);margin-bottom:4px}
+.tally b{color:var(--ink);font-family:var(--f-mono)}
+
+.toast{position:fixed;left:50%;bottom:calc(16px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:10px;font-size:14.5px;z-index:20;max-width:calc(100% - 32px);box-shadow:0 6px 20px rgba(0,0,0,.2)}
+.sync{display:flex;gap:6px;align-items:center;font-size:13px;color:var(--muted)}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--muted)}
+.dot.on{background:var(--reed)}
+.dot.off{background:var(--bad)}
+footer{color:var(--muted);font-size:12.5px;padding-top:12px;border-top:1px solid var(--line)}
+@media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="wrap">
+    <div class="brand">
+      <span class="eyebrow">Norfolk Broads · Wroxham to Stalham</span>
+      <h1>Up the Ant</h1>
+    </div>
+    <nav class="tabs" role="tablist">
+      <button role="tab" id="tab-route" aria-selected="true" data-view="route">Route</button>
+      <button role="tab" id="tab-quiz" aria-selected="false" data-view="quiz">Pub quiz</button>
+      <button role="tab" id="tab-helm" aria-selected="false" data-view="helm">Helm draw</button>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+
+<!-- ROUTE -->
+<section class="view" id="route">
+  <p class="lede">Down the Bure from Wroxham, past the ruins of St Benet's, then left up the River Ant: through How Hill, across Barton Broad, and on to Neatishead and Stalham. Tap any stop for the history, the wildlife and something to win an argument with.</p>
+  <div class="facts" id="facts"></div>
+  <div class="windy" role="note">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M3 8h11a3 3 0 1 0-3-3M3 12h16a3 3 0 1 1-3 3M3 16h7"/></svg>
+    <p><b>Windy-day note.</b> The Ant is narrow and winding, so it's fairly sheltered, but Barton Broad is open water and gusts hard across it. Ludham Bridge and Wroxham Bridge are low: check the clearance boards, and remember wind pushes a slow boat sideways under bridges. If the plan changes, the stops below still work as a Bure-only trip.</p>
+  </div>
+  <div class="route" id="routeList"></div>
+  <div class="panel">
+    <h2>Talk like a Broadsman</h2>
+    <p>Words you'll see on signs and hear at the staithe.</p>
+    <dl class="gloss">
+      <dt>Staithe</dt><dd>A landing place or quay. Every village has one.</dd>
+      <dt>Dyke</dt><dd>A side channel off the river, often leading to a staithe.</dd>
+      <dt>Quant</dt><dd>The long pole wherrymen used to push a boat along when the wind died.</dd>
+      <dt>Carr</dt><dd>Wet woodland of alder and willow that grows up on old fen.</dd>
+      <dt>Rond</dt><dd>The strip of land between the river's edge and the flood bank.</dd>
+      <dt>Wherry</dt><dd>The black-sailed Norfolk cargo boat, built to sail close to the wind with one big gaff sail.</dd>
+      <dt>Mardle</dt><dd>A good long chat. Also a pond.</dd>
+      <dt>Bishy barnabee</dt><dd>A ladybird.</dd>
+      <dt>On the huh</dt><dd>Lopsided, askew. See also: someone's mooring.</dd>
+      <dt>Squit</dt><dd>Nonsense. As in "talking squit".</dd>
+    </dl>
+  </div>
+  <div class="panel">
+    <h2>Wildlife spotter</h2>
+    <p>Tick them off as you go. Ticks are saved on your own phone.</p>
+    <div class="spot" id="spotList"></div>
+  </div>
+</section>
+
+<!-- QUIZ -->
+<section class="view" id="quiz" hidden>
+  <div>
+    <span class="eyebrow">Live pub quiz</span>
+    <h2 style="font-size:28px;margin-top:4px">The Ant &amp; Anchor Quiz</h2>
+  </div>
+  <div class="who" id="who"></div>
+  <div class="banner" id="offBanner" hidden>
+    <span><b>No signal right now.</b> Keep going offline: answer the round on your phone, then send the quizmaster your answer code.</span>
+    <div><button class="btn small" id="goOffline">Play this round offline</button></div>
+  </div>
+  <div id="stage"></div>
+  <div class="host" id="hostPanel" hidden></div>
+  <div>
+    <div class="qmeta" style="margin-bottom:10px;flex-wrap:wrap">
+      <h3 style="font-size:22px">Leaderboard</h3>
+      <span class="sync" id="sync"><span class="dot"></span><span>Connecting…</span></span>
+    </div>
+    <div class="board" id="board"></div>
+  </div>
+  <div id="offlinePlay" hidden></div>
+  <div class="row2" id="quizFoot"></div>
+</section>
+
+<!-- HELM -->
+<section class="view" id="helm" hidden>
+  <div class="helm">
+    <div style="text-align:center">
+      <span class="eyebrow">The helm draw</span>
+      <h2 style="font-size:28px;margin-top:4px">Who's piloting next?</h2>
+    </div>
+    <div class="crew" id="crew" aria-label="Crew on duty. Tap to stand someone down."></div>
+    <div class="wheelbox"><div class="pointer" aria-hidden="true"></div><canvas id="wheel" width="640" height="640" aria-label="Spinning wheel of crew names"></canvas></div>
+    <button class="btn sail" id="spinBtn" style="font-size:18px;padding:14px 34px">Spin the wheel</button>
+    <div class="result" id="result" aria-live="polite"></div>
+    <label class="toggle"><input type="checkbox" id="fair" checked> Fair turns: nobody goes twice until everyone has had a go</label>
+    <span class="note" style="text-align:center">Anyone can spin. Every phone sees the result.</span>
+    <div class="log">
+      <h3 style="font-size:20px;margin-bottom:6px">Helm log</h3>
+      <div class="tally" id="tally"></div>
+      <ol id="log"></ol>
+      <div class="row2" id="logReset" style="margin-top:10px"></div>
+    </div>
+  </div>
+</section>
+
+<footer>Made for six: Jimmy, Anna, Pippa, Simon, Sally and Charly. Opening times for museums and pubs change, so check before you moor up for them.</footer>
+</main>
+<div class="toast" id="toast" role="status" hidden></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/13.1.0/firebase-app.js";
+import { initializeFirestore, getFirestore, persistentLocalCache, persistentMultipleTabManager, doc, onSnapshot, setDoc, runTransaction, arrayUnion, arrayRemove } from "https://www.gstatic.com/firebasejs/13.1.0/firebase-firestore.js";
+
+/* =====================================================================
+   SETTINGS: crew, host PIN and Firebase connection
+   ===================================================================== */
+const CREW = ["Jimmy","Anna","Pippa","Simon","Sally","Charly"];
+const HOST_PIN = "2026";
+const firebaseConfig = {
+  apiKey: "AIzaSyDk2yleT9q1mvtBn5VuSHCTbGEXLL3i9WY",
+  authDomain: "uptheant-3311f.firebaseapp.com",
+  projectId: "uptheant-3311f",
+  storageBucket: "uptheant-3311f.firebasestorage.app",
+  messagingSenderId: "144276578322",
+  appId: "1:144276578322:web:95a86916bf9e2f8ebdb8cb"
+};
+
+/* =====================================================================
+   ROUTE CONTENT. river: "bure" (blue line), "ant" (light blue), "dyke" (green)
+   label: shown above the first stop of a new stretch of water
+   ===================================================================== */
+const STOPS = [
+  {"name":"Wroxham & Hoveton","river":"bure","label":"River Bure","sub":"Start: the self-styled capital of the Broads","hist":"Wroxham sits on the south bank of the Bure and Hoveton on the north; most of what visitors call Wroxham, including Roys, is technically in Hoveton. The village grew into a boating centre after the railway arrived from Norwich in the 1870s, and John Loynes, often called the father of Broads boat hire, set up his hire yard here in the late 19th century.","geo":"The stone Wroxham Bridge dates from 1619 and is one of the lowest and tightest on the system. Hire boats aren't allowed to take it on alone: there's a pilot service that will take you through.","trivia":"Roys of Wroxham, founded in 1895 by brothers Arnold and Alfred Roy, has long billed itself as \"the world's largest village store\". The 15-inch gauge Bure Valley Railway runs nine miles from here to Aylsham on the old railway line.","tags":["Supplies at Roys","Bure Valley Railway","Low bridge: use the pilot"]},
+  {"name":"Horning","river":"bure","sub":"Thatched boathouses and riverside pubs","hist":"A long riverside village where the Bure doubles back on itself. A ferry crossed the river here for centuries, and the Ferry Inn marks the spot. Horning was a favourite of Edwardian holidaymakers, who built the thatched boathouses you'll pass.","geo":"Just upstream on the north bank is Hoveton Great Broad. It's one of the broads you can't sail onto, but there's a nature trail reached only by boat, with a mooring on the river.","trivia":"Arthur Ransome set his 1934 children's novel Coot Club around Horning, with the young heroes protecting a coot's nest from a hired motor cruiser full of \"Hullabaloos\".","tags":["Swan Inn","Ferry Inn","Hoveton Great Broad trail"]},
+  {"name":"St Benet's Abbey","river":"bure","sub":"The abbey Henry VIII never closed","hist":"Monks were here before the Vikings: a hermit called Suneman is said to have been killed when the Danes came through in the 9th century. The abbey proper was founded around 1020 with the backing of King Cnut. At the Dissolution, Henry VIII didn't close it; instead an Act of 1536 joined the abbey to the Bishopric of Norwich. So the Bishop of Norwich is still, officially, the Abbot of St Benet's.","geo":"It stands on a slight rise in the marshes, which in the Middle Ages made it almost an island, with fishponds and a causeway. What survives is the gatehouse, bits of precinct wall and the lumps of the church.","trivia":"In the 18th century a farmer built a drainage windmill straight through the medieval gatehouse, which is why the ruin looks so odd. Every year on the first Sunday in August the Bishop arrives by wherry to hold an open-air service. The oak cross on the high altar site came from the Sandringham estate.","legend":"The local legend: when the Normans besieged the abbey, a monk opened the gates in return for being made abbot. They kept their word, made him abbot, then hanged him from the gatehouse.","tags":["Free to visit","Moorings close by","Ghost story included"]},
+  {"name":"Ant Mouth & Ludham Bridge","river":"ant","label":"River Ant","sub":"Turn north onto the Ant","hist":"Just upstream of St Benet's the Ant joins the Bure. From here the river is narrower, twistier and more reed-lined. Ludham village, a short walk from the bridge, has the church of St Catherine with a painted rood screen from the 1490s.","geo":"Ludham Bridge is low, so check the clearance gauge before you commit, especially if there's been rain. There's a small shop and a stretch of moorings by the bridge.","trivia":"In St Catherine's, Ludham, the board over the chancel arch has a painted Crucifixion on one side and the royal arms of Elizabeth I on the other. It's thought it was turned round during the Reformation and quietly kept.","tags":["Low bridge","Ludham village","St Catherine's Church"]},
+  {"name":"How Hill","river":"ant","sub":"Mills, marshes and the eel catcher's cottage","hist":"The thatched house on the hill was built in 1904 by the Norwich architect Edward Boardman as his family's holiday home. It's now run by the How Hill Trust as an environmental study centre.","geo":"The view from How Hill is one of the classic Broads scenes: grazing marsh, reedbeds and three drainage mills. Boardman's Mill is a skeleton trestle mill, Clayrack is a small hollow-post mill, and Turf Fen Mill stands on the opposite bank.","trivia":"Toad Hole Cottage, a tiny marshman's cottage, is set up as it would have been for an eel catcher and his family. Eel catching on the Broads went on until very recently, using nets called eel setts strung across the river.","tags":["Toad Hole Cottage","Wildlife water trail","Three drainage mills"]},
+  {"name":"Irstead","river":"ant","sub":"A thatched church at the water's edge","hist":"Irstead is one of the smallest villages on the Ant. Its church, St Michael's, is thatched and stands right by the river. The stretch below Barton Broad here is known as Irstead Shoals.","geo":"This is where the Ant opens out towards Barton Broad. Expect the wind to pick up as the banks fall away.","trivia":"Thatching on the Broads is done with Norfolk reed, cut from the same reedbeds you're sailing through. A good reed roof can last fifty years or more.","tags":["Thatched church","Quiet mooring"]},
+  {"name":"Barton Broad","river":"ant","sub":"Second-largest broad and Nelson's practice pond","hist":"Horatio Nelson went to school at Paston in North Walsham, a few miles away, and local tradition says he learned to sail on Barton Broad. By the late 20th century the broad was choked with phosphate-rich mud. The Clear Water 2000 project pumped out vast amounts of it to bring the water back to life.","geo":"Only Hickling Broad is bigger. Pleasure Island sits in the middle. On the north-west side, a boardwalk from Gay's Staithe takes you through wet carr woodland to a viewing platform over the open water.","trivia":"Like every broad, Barton is man-made. Medieval villagers dug out peat for fuel, and as water levels rose in the 13th and 14th centuries the pits flooded. Nobody proved it until Dr Joyce Lambert studied the straight-sided pits under the water in the 1950s.","tags":["Open water: gusty","Barton Boardwalk","Pleasure Island"]},
+  {"name":"Neatishead","river":"dyke","label":"Limekiln Dyke","sub":"Up the dyke to Gay's Staithe","hist":"Neatishead is reached by Limekiln Dyke off the western side of Barton Broad. The name gives away its past: lime was burned here and shipped out by wherry. The White Horse is the village pub.","geo":"Gay's Staithe at the end of the dyke has moorings and the start of the Barton Boardwalk.","trivia":"RAF Neatishead was a radar station from the Second World War through the Cold War. The old operations block is now the RAF Air Defence Radar Museum, home to a restored Cold War operations room. It's only open on certain days, so check before you go.","tags":["White Horse pub","Radar museum","Gay's Staithe"]},
+  {"name":"Stalham","river":"dyke","label":"Stalham Dyke","sub":"Finish: boatyards and the Museum of the Broads","hist":"Stalham is a small market town with a busy staithe, home to one of the biggest hire-boat yards on the Broads. Stalham Staithe also has the Museum of the Broads, packed with boats, tools and the story of how people lived and worked here.","geo":"Nearby Sutton Staithe has its own dyke. Further north, the Ant runs on past Wayford Bridge towards the North Walsham & Dilham Canal, opened in 1826 and Norfolk's only true canal.","trivia":"Sutton Mill, just outside Stalham, is a nine-storey windmill from 1789 and is said to be the tallest windmill in Britain.","tags":["Museum of the Broads","Sutton Mill nearby","End of the line"]}
+];
+const HIGHLIGHTS = [
+  ["~125 mi","of lock-free navigable water across the Broads"],
+  ["1950s","when Dr Joyce Lambert proved the broads are flooded medieval peat pits"],
+  ["2nd","Barton Broad's rank among the broads by size, after Hickling"]
+];
+const SPOT = [
+  ["Swallowtail butterfly","Britain's biggest butterfly; here and nowhere else in the UK"],
+  ["Marsh harrier","Big brown raptor quartering low over the reeds"],
+  ["Bittern","Heard more than seen: a deep booming call"],
+  ["Common crane","Tall grey birds, mainly around Hickling"],
+  ["Kingfisher","A blue flash along the bank"],
+  ["Great crested grebe","Elegant diving bird with a head crest"],
+  ["Otter","Look for a V-shaped wake at dawn or dusk"],
+  ["Chinese water deer","Small deer with tusks, no antlers"],
+  ["Norfolk hawker","Brown dragonfly with bright green eyes"],
+  ["Grey heron","Standing motionless at the water's edge"],
+  ["Coot","White bill and forehead. See Coot Club."],
+  ["A sailing wherry","Black sail, single mast: a real treat"]
+];
+
+/* =====================================================================
+   QUIZ. r = round name, q = question, o = four options (shown in this order),
+   k = scrambled answer letter: chr(97 + ((correctIndex*7 + q.length) % 26)),
+   f = fun fact shown after the reveal. See CLAUDE.md.
+   ===================================================================== */
+const QUIZ = [
+  {"r":"Up the Ant","q":"Which Norfolk abbey is the only monastery in England never dissolved by Henry VIII?","o":["Walsingham Abbey","St Benet's Abbey","Castle Acre Priory","Binham Priory"],"k":"m","f":"An Act of 1536 joined it to the Bishopric of Norwich instead."},
+  {"r":"Up the Ant","q":"Who holds the title Abbot of St Benet's today?","o":["The Duke of Norfolk","The King","The Archbishop of Canterbury","The Bishop of Norwich"],"k":"p","f":"He arrives by wherry for an open-air service there every August."},
+  {"r":"Up the Ant","q":"What was built inside St Benet's gatehouse in the 18th century?","o":["A drainage windmill","A lighthouse","A chapel","A pub"],"k":"l","f":"Its brick stump still rises out of the medieval arch."},
+  {"r":"Up the Ant","q":"Which naval hero is said to have learned to sail on Barton Broad?","o":["Walter Raleigh","James Cook","Horatio Nelson","Francis Drake"],"k":"b","f":"He went to school at Paston, in North Walsham."},
+  {"r":"Up the Ant","q":"Barton is the second-largest broad. Which is the largest?","o":["Ormesby Broad","Rockland Broad","Hickling Broad","Wroxham Broad"],"k":"t","f":""},
+  {"r":"Up the Ant","q":"Toad Hole Cottage at How Hill is set up as the home of which kind of marshman?","o":["An eel catcher","A wherryman","A miller","A thatcher"],"k":"a","f":""},
+  {"r":"Up the Ant","q":"Which Arthur Ransome novel is set around Horning?","o":["Swallows and Amazons","Winter Holiday","Pigeon Post","Coot Club"],"k":"s","f":"Published in 1934. The sequel, The Big Six, is also set on the Broads."},
+  {"r":"Up the Ant","q":"Which museum stands at Stalham Staithe?","o":["The Eel & Reed Museum","The Museum of the Broads","The Norfolk Sailing Museum","The Wherry Heritage Centre"],"k":"u","f":""},
+  {"r":"Up the Ant","q":"The museum at Neatishead is all about what?","o":["Lifeboats","RAF air defence radar","Steam engines","Windmills"],"k":"y","f":"RAF Neatishead was a radar station from WW2 through the Cold War."},
+  {"r":"Up the Ant","q":"Roys of Wroxham calls itself the world's largest what?","o":["Boatyard","Garden centre","Tea room","Village store"],"k":"x","f":"Founded in 1895."},
+  {"r":"Broads & Boats","q":"How were the broads created?","o":["Medieval peat digging that flooded","Roman salt works","A great storm in 1287","Glaciers in the last Ice Age"],"k":"c","f":"Rising water drowned the pits in the 13th and 14th centuries."},
+  {"r":"Broads & Boats","q":"Who proved in the 1950s that the broads are man-made?","o":["Ted Ellis","Sir Peter Scott","Dr Joyce Lambert","Arthur Ransome"],"k":"p","f":""},
+  {"r":"Broads & Boats","q":"What is the traditional black-sailed Norfolk cargo boat called?","o":["A coble","A narrowboat","A wherry","A smack"],"k":"z","f":""},
+  {"r":"Broads & Boats","q":"What's the name of the long pole used to push a boat along?","o":["A quant","A boom","A gaff","A tiller"],"k":"h","f":""},
+  {"r":"Broads & Boats","q":"What's the Norfolk word for a landing place or quay?","o":["Rond","Dyke","Carr","Staithe"],"k":"v","f":""},
+  {"r":"Broads & Boats","q":"Roughly how many miles of lock-free navigable water are there on the Broads?","o":["About 600","About 125","About 300","About 40"],"k":"f","f":""},
+  {"r":"Broads & Boats","q":"Which organisation, set up in 1989, looks after the Broads?","o":["Natural England","The Broads Authority","The Environment Agency","The National Trust"],"k":"o","f":""},
+  {"r":"Broads & Boats","q":"Which butterfly is found in the UK only on the Broads?","o":["Red admiral","Large blue","Purple emperor","Swallowtail"],"k":"x","f":"Its caterpillars feed on milk parsley."},
+  {"r":"Broads & Boats","q":"Which secretive reedbed bird is known for its booming call?","o":["The bittern","The marsh harrier","The crane","The coot"],"k":"h","f":""},
+  {"r":"Broads & Boats","q":"Which is the Norfolk Wherry Trust's trading wherry, built in 1898?","o":["Solace","Maud","Albion","Hathor"],"k":"c","f":"Hathor, Maud and Solace are real wherries too."},
+  {"r":"Norfolk","q":"In Norfolk dialect, what is a \"bishy barnabee\"?","o":["A hedgehog","A snail","A ladybird","A heron"],"k":"j","f":""},
+  {"r":"Norfolk","q":"Which royal estate is in Norfolk?","o":["Sandringham","Balmoral","Highgrove","Osborne"],"k":"h","f":""},
+  {"r":"Norfolk","q":"Which Norfolk-born nurse was executed in 1915 for helping Allied soldiers escape occupied Belgium?","o":["Florence Nightingale","Mary Seacole","Elsie Inglis","Edith Cavell"],"k":"p","f":"Born at Swardeston, near Norwich."},
+  {"r":"Norfolk","q":"What is Norwich City FC's nickname?","o":["The Seagulls","The Canaries","The Magpies","The Tractor Boys"],"k":"q","f":""},
+  {"r":"Norfolk","q":"Which mustard maker was founded in Norfolk and long based in Norwich?","o":["Heinz","Colman's","Tracklements","Maille"],"k":"y","f":""},
+  {"r":"Norfolk","q":"Which seaside town has the Britannia Pier?","o":["Cromer","Hunstanton","Southwold","Great Yarmouth"],"k":"l","f":""},
+  {"r":"Norfolk","q":"Cromer is famous for which seafood?","o":["Crab","Oysters","Cockles","Mussels"],"k":"j","f":""},
+  {"r":"Norfolk","q":"Which city is fictional broadcaster Alan Partridge from?","o":["Ipswich","Lowestoft","Norwich","Peterborough"],"k":"s","f":""},
+  {"r":"Norfolk","q":"Which queen of the Iceni led a revolt against the Romans?","o":["Cartimandua","Aethelflaed","Boudica","Matilda"],"k":"t","f":""},
+  {"r":"Norfolk","q":"Norwich Cathedral has the second-tallest spire in England. Which cathedral has the tallest?","o":["Salisbury","Durham","York","Lincoln"],"k":"n","f":""},
+  {"r":"Knots & Nonsense","q":"Facing forward on a boat, which side is port?","o":["Right","Front","Back","Left"],"k":"o","f":""},
+  {"r":"Knots & Nonsense","q":"What colour is a boat's starboard navigation light?","o":["Red","Green","Blue","White"],"k":"g","f":"Port is red. Port wine is red, too."},
+  {"r":"Knots & Nonsense","q":"What is a boat's kitchen called?","o":["The heads","The galley","The hold","The bilge"],"k":"n","f":""},
+  {"r":"Knots & Nonsense","q":"Which knot is often called the king of knots?","o":["The reef knot","The clove hitch","The sheet bend","The bowline"],"k":"o","f":""},
+  {"r":"Knots & Nonsense","q":"Which scale measures wind force at sea?","o":["Beaufort","Fujita","Saffir-Simpson","Richter"],"k":"n","f":""},
+  {"r":"Knots & Nonsense","q":"On the Beaufort scale, what is force 8?","o":["A strong breeze","A hurricane","A gale","A storm"],"k":"b","f":""},
+  {"r":"Knots & Nonsense","q":"Which side of the river should you keep to on the Broads?","o":["The left","Whichever is deeper","The right","The middle"],"k":"t","f":""},
+  {"r":"Knots & Nonsense","q":"Which river do the Three Men in a Boat row along?","o":["The Thames","The Severn","The Cam","The Avon"],"k":"x","f":""},
+  {"r":"Knots & Nonsense","q":"What does \"aft\" mean on a boat?","o":["Towards the front","Below deck","Upwind","Towards the back"],"k":"a","f":""},
+  {"r":"Knots & Nonsense","q":"A knot is a speed of one what per hour?","o":["Statute mile","Nautical mile","Kilometre","League"],"k":"u","f":""}
+];
+
+/* ===================================================================== */
+const CREW_TOK=["--river","--sail","--reed","--plum","--sky","--slate"];
+const LET="ABCD";
+const $=s=>document.querySelector(s);
+const esc=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const lsGet=(k,d)=>{try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}};
+const lsSet=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}};
+const tok=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim()||"#888";
+let toastT;
+function toast(m){if(!m)return;const t=$("#toast");t.textContent=m;t.hidden=false;clearTimeout(toastT);toastT=setTimeout(()=>t.hidden=true,3200)}
+function hash(s){let x=5381;for(const c of s)x=((x*33)^c.charCodeAt(0))>>>0;return x.toString(36)}
+
+/* quiz data prep */
+const ROUNDS=[...new Set(QUIZ.map(x=>x.r))];
+const QS=QUIZ.map(x=>({id:"q"+hash(x.r+"|"+x.q),round:ROUNDS.indexOf(x.r)+1,q:x.q,opts:x.o,fact:x.f||"",
+  a:[0,1,2,3].find(i=>String.fromCharCode(97+((i*7+x.q.length)%26))===x.k)}));
+const qById=id=>QS.find(q=>q.id===id);
+const roundQs=r=>QS.filter(q=>q.round===r);
+
+/* ---------- tabs ---------- */
+function show(v){
+  document.querySelectorAll(".view").forEach(s=>s.hidden=s.id!==v);
+  document.querySelectorAll("nav.tabs button").forEach(b=>b.setAttribute("aria-selected",b.dataset.view===v));
+  lsSet("ant-tab",v);
+  if(v==="helm")drawWheel();
+}
+document.querySelectorAll("nav.tabs button").forEach(b=>b.onclick=()=>{show(b.dataset.view);window.scrollTo(0,0)});
+
+/* ---------- ROUTE ---------- */
+$("#facts").innerHTML=HIGHLIGHTS.map(h=>`<div class="fact"><b>${esc(h[0])}</b><span>${esc(h[1])}</span></div>`).join("");
+$("#routeList").innerHTML=STOPS.map((s,i)=>`
+ <div class="stop ${s.river==="ant"?"ant":s.river==="dyke"?"dyke":""}">
+  <div class="rail"><span class="node">${i+1}</span></div>
+  <div class="card">
+   ${s.label?`<div class="river-label">${esc(s.label)}</div>`:""}
+   <details ${i===0?"open":""}>
+    <summary><div><h3>${esc(s.name)}</h3><div class="sub">${esc(s.sub)}</div></div>
+     <svg class="chev" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary>
+    <div class="body">
+     ${s.hist?`<div><h4>History</h4><p>${esc(s.hist)}</p></div>`:""}
+     ${s.geo?`<div><h4>On the water</h4><p>${esc(s.geo)}</p></div>`:""}
+     ${s.legend?`<div><h4>Legend</h4><p>${esc(s.legend)}</p></div>`:""}
+     ${s.trivia?`<div class="trivia"><h4>Trivia</h4><p>${esc(s.trivia)}</p></div>`:""}
+     <div class="tags">${(s.tags||[]).map(t=>`<span class="tag">${esc(t)}</span>`).join("")}</div>
+    </div>
+   </details>
+  </div>
+ </div>`).join("");
+const spotted=lsGet("ant-spotted",{});
+$("#spotList").innerHTML=SPOT.map((s,i)=>`<label><input type="checkbox" id="spot${i}" ${spotted[i]?"checked":""}><span>${esc(s[0])}<small>${esc(s[1])}</small></span></label>`).join("");
+$("#spotList").addEventListener("change",e=>{spotted[e.target.id.replace("spot","")]=e.target.checked;lsSet("ant-spotted",spotted)});
+
+/* ---------- Firebase ---------- */
+const app=initializeApp(firebaseConfig);
+let db;
+try{db=initializeFirestore(app,{localCache:persistentLocalCache({tabManager:persistentMultipleTabManager()})})}
+catch(e){db=getFirestore(app)}
+const REF={quiz:doc(db,"trip","quiz"),answers:doc(db,"trip","answers"),helm:doc(db,"trip","helm")};
+const blankQ=()=>({cur:null,phase:"idle",revealed:{},codeRounds:{}});
+const blankH=()=>({log:[],done:[],off:[],fair:true});
+let Q=blankQ(),A={},H=blankH(),loaded={quiz:false,answers:false,helm:false},cached=true;
+
+/* ---------- quiz state ---------- */
+let me=lsGet("ant-me",null);
+if(me&&!CREW.includes(me))me=null;
+let isHost=lsGet("ant-host",false)===true;
+let myPicks=lsGet("ant-picks",{});
+let sel=null,selFor=null,busy=false,pinOpen=false,confirmReset=false,hostRound=1,hostRoundTouched=false;
+let offRound=null,offAns=lsGet("ant-off",{}),showCode=false;
+
+function scores(){
+  const out=Object.fromEntries(CREW.map(n=>[n,0]));
+  Object.keys(A).forEach(id=>{const q=qById(id);if(!q)return;const p=A[id]||{};
+    Object.keys(p).forEach(n=>{const counted=Q.revealed[id]||(Q.codeRounds[n]||[]).includes(q.round);
+      if(counted&&p[n]===q.a&&out[n]!=null)out[n]++})});
+  return out;
+}
+const answered=id=>Object.keys(A[id]||{}).filter(n=>CREW.includes(n));
+
+function setSync(){
+  const d=$("#sync .dot"),t=$("#sync span:last-child");
+  const ready=loaded.quiz&&loaded.answers;
+  d.className="dot "+(!ready?"":cached?"off":"on");
+  t.textContent=!ready?"Connecting…":cached?"No signal: answers will send when you're back":"Live";
+  $("#offBanner").hidden=!(ready&&cached&&me&&!offRound);
+}
+
+function renderWho(){
+  const el=$("#who");
+  el.innerHTML=!me
+    ?`<div style="display:flex;flex-direction:column;gap:8px;width:100%"><b>Who's playing on this phone?</b><div class="chips">${CREW.map(n=>`<button class="chip" data-me="${esc(n)}">${esc(n)}</button>`).join("")}</div></div>`
+    :`<span>Playing as <b>${esc(me)}</b></span><button class="linkbtn" data-me="">Change</button>`;
+}
+$("#who").onclick=e=>{const b=e.target.closest("[data-me]");if(!b)return;me=b.dataset.me||null;lsSet("ant-me",me);renderQuiz()};
+
+function renderStage(){
+  const st=$("#stage");
+  if(!loaded.quiz){st.innerHTML=`<div class="qcard waiting"><span class="eyebrow">Loading the quiz…</span></div>`;return}
+  const Qn=qById(Q.cur);
+  if(!Qn){
+    st.innerHTML=`<div class="qcard waiting">
+      <svg class="boat" width="54" height="40" viewBox="0 0 54 40" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round" aria-hidden="true"><path d="M27 3v24M27 5l14 20H27M27 9 15 25h12M5 29h44l-6 8H11z"/></svg>
+      <h3 style="font-size:22px">Waiting for the quizmaster</h3>
+      <p class="muted">The first question will pop up here on its own.</p></div>`;
+    return;
+  }
+  const rq=roundQs(Qn.round),idx=rq.indexOf(Qn)+1,picks=A[Qn.id]||{},ans=answered(Qn.id);
+  const iAnswered=me&&picks[me]!=null;
+  const rev=Q.phase==="revealed"&&Q.revealed[Qn.id];
+  const mine=me&&picks[me]!=null?picks[me]:myPicks[Qn.id];
+  if(selFor!==Qn.id){sel=null;selFor=Qn.id}
+  const canPick=me&&Q.phase==="asking"&&!iAnswered;
+  const opts=Qn.opts.map((o,i)=>{
+    let cls="opt";
+    if(rev){if(i===Qn.a)cls+=" right";else if(mine===i)cls+=" wrong"}
+    else if((canPick&&sel===i)||(!canPick&&mine===i))cls+=" sel";
+    const who=rev?ans.filter(n=>picks[n]===i).join(", "):"";
+    return `<button class="${cls}" data-opt="${i}" ${canPick?"":"disabled"}><span class="L">${LET[i]}</span><span>${esc(o)}</span><span class="who-picked">${esc(who)}</span></button>`;
+  }).join("");
+  let foot="";
+  if(rev){
+    if(me&&mine!=null)foot+=`<div class="verdict ${mine===Qn.a?"good":"bad"}">${mine===Qn.a?"Correct!":"Not this time"}</div>`;
+    else if(me)foot+=`<div class="verdict bad">No answer locked in</div>`;
+    if(Qn.fact)foot+=`<div class="fact-box">${esc(Qn.fact)}</div>`;
+  }else if(!me)foot=`<p class="note">Pick your name above to play.</p>`;
+  else if(iAnswered)foot=`<p class="note">Locked in${mine!=null?`: ${LET[mine]}`:""}. Waiting for the reveal.</p>`;
+  else foot=`<button class="btn primary" id="lockIn" ${sel==null||busy?"disabled":""}>Lock in ${sel!=null?LET[sel]:"answer"}</button>`;
+  st.innerHTML=`<div class="qcard" aria-live="polite">
+    <div class="qmeta"><span class="eyebrow">Round ${Qn.round} · ${esc(ROUNDS[Qn.round-1])}</span><span class="qnum">Q${idx} of ${rq.length}</span></div>
+    <div class="qtext">${esc(Qn.q)}</div>
+    <div class="opts">${opts}</div>
+    ${foot}
+    <div class="answered" aria-label="Who has answered">${CREW.map(n=>`<span class="${ans.includes(n)?"in":""}">${esc(n)}${ans.includes(n)?" ✓":""}</span>`).join("")}</div>
+  </div>`;
+}
+$("#stage").onclick=async e=>{
+  const o=e.target.closest("[data-opt]");
+  if(o&&!o.disabled){sel=+o.dataset.opt;renderStage();return}
+  if(e.target.id==="lockIn"&&sel!=null&&!busy){
+    const Qn=qById(Q.cur);if(!Qn||Q.phase!=="asking")return;
+    const pick=sel;busy=true;myPicks[Qn.id]=pick;lsSet("ant-picks",myPicks);
+    A={...A,[Qn.id]:{...(A[Qn.id]||{}),[me]:pick}};renderStage();
+    setDoc(REF.answers,{[Qn.id]:{[me]:pick}},{merge:true}).catch(()=>toast("Couldn't send your answer. It'll retry when you have signal."));
+    toast(cached?"Locked in. It'll send when you have signal.":"Locked in");
+    busy=false;renderStage();
+  }
+};
+
+function renderBoard(){
+  if(!loaded.answers){$("#board").innerHTML="";return}
+  const sc=scores(),order=[...CREW].sort((a,b)=>sc[b]-sc[a]),top=Math.max(...CREW.map(n=>sc[n]));
+  $("#board").innerHTML=order.map((n,i)=>`<div class="brow ${top>0&&sc[n]===top?"lead":""} ${n===me?"me":""}"><span class="pos">${i+1}</span><span class="nm">${esc(n)}</span><span class="sc">${sc[n]}</span></div>`).join("");
+}
+
+function renderHost(){
+  const hp=$("#hostPanel");
+  if(!isHost||!loaded.quiz){hp.hidden=true;return}
+  hp.hidden=false;
+  const cur=qById(Q.cur);
+  if(cur&&!hostRoundTouched)hostRound=cur.round;
+  const rq=roundQs(hostRound),next=cur?QS[QS.indexOf(cur)+1]:QS[0];
+  let main="";
+  if(cur&&Q.phase==="asking")main=`<button class="btn sail grow" data-h="reveal">Reveal answer (${answered(cur.id).length} of ${CREW.length} in)</button>`;
+  else if(next)main=`<button class="btn primary grow" data-h="ask" data-q="${next.id}">${cur?"Ask next question":"Ask the first question"}</button>`;
+  hp.innerHTML=`
+   <div class="qmeta"><h3>Quizmaster controls</h3><button class="linkbtn" data-h="logout">Log out</button></div>
+   <div class="row2">${main||`<span class="note">That's the last question. Well played, everyone.</span>`}</div>
+   <div class="chips">${ROUNDS.map((r,i)=>`<button class="chip" aria-pressed="${hostRound===i+1}" data-h="round" data-r="${i+1}">R${i+1}: ${esc(r)}</button>`).join("")}</div>
+   <div class="qlist">${rq.map((q,i)=>{
+     const live=q.id===Q.cur,done=!!Q.revealed[q.id];
+     return `<div class="qrow ${live?"live":""}"><div style="min-width:0"><span class="st">Q${i+1} · ${live?(Q.phase==="asking"?"Live now":"Revealed"):done?"Revealed":"Not asked"}</span><div>${esc(q.q)}</div></div>
+       ${live?"":`<button class="btn small" data-h="ask" data-q="${q.id}">${done?"Show":"Ask"}</button>`}</div>`}).join("")}</div>
+   <div>
+     <span class="eyebrow">Answer codes from offline players</span>
+     <div class="field" style="margin-top:6px"><input id="codeIn" placeholder="PIPPA-2-1302401320" autocomplete="off" autocapitalize="characters"><button class="btn" data-h="code">Add</button></div>
+   </div>
+   <div class="row2">${confirmReset?`<span>Wipe all answers and scores?</span><button class="btn sail small" data-h="resetYes">Yes, reset quiz</button><button class="btn small" data-h="resetNo">Cancel</button>`:`<button class="btn small" data-h="resetAsk">Reset quiz</button>`}</div>`;
+}
+function addCode(code){
+  const m=String(code||"").trim().toUpperCase().replace(/\s+/g,"").match(/^([A-Z]+)-?(\d+)-?([0-4]+)$/);
+  if(!m)return "That code doesn't look right. It should look like PIPPA-2-1302401320.";
+  const name=CREW.find(n=>n.toUpperCase().replace(/[^A-Z]/g,"")===m[1]);
+  if(!name)return `No player called ${m[1]}.`;
+  const round=+m[2],rq=roundQs(round);
+  if(!rq.length)return `There's no round ${round}.`;
+  if(m[3].length!==rq.length)return `That code has ${m[3].length} answers but round ${round} has ${rq.length} questions.`;
+  const upd={};let added=0;
+  rq.forEach((q,i)=>{const d=+m[3][i];if(d>0&&(A[q.id]||{})[name]==null){upd[q.id]={[name]:d-1};added++}});
+  if(added)setDoc(REF.answers,upd,{merge:true});
+  const cr=[...new Set([...(Q.codeRounds[name]||[]),round])];
+  setDoc(REF.quiz,{codeRounds:{[name]:cr}},{merge:true});
+  return `Added ${added} answer${added===1?"":"s"} from ${name} for round ${round}.`;
+}
+$("#hostPanel").onclick=async e=>{
+  const b=e.target.closest("[data-h]");if(!b)return;
+  const h=b.dataset.h;
+  if(h==="round"){hostRound=+b.dataset.r;hostRoundTouched=true;renderHost();return}
+  if(h==="logout"){isHost=false;lsSet("ant-host",false);renderQuiz();return}
+  if(h==="resetAsk"){confirmReset=true;renderHost();return}
+  if(h==="resetNo"){confirmReset=false;renderHost();return}
+  try{
+    if(h==="ask"){hostRoundTouched=false;const id=b.dataset.q;await setDoc(REF.quiz,{cur:id,phase:Q.revealed[id]?"revealed":"asking"},{merge:true})}
+    if(h==="reveal"&&Q.cur)await setDoc(REF.quiz,{phase:"revealed",revealed:{[Q.cur]:true}},{merge:true});
+    if(h==="code"){toast(addCode($("#codeIn").value));$("#codeIn").value=""}
+    if(h==="resetYes"){confirmReset=false;myPicks={};lsSet("ant-picks",{});await setDoc(REF.quiz,blankQ());await setDoc(REF.answers,{});toast("Quiz reset")}
+  }catch(err){toast("That didn't go through. Check your signal and try again.")}
+  renderHost();
+};
+
+function renderFoot(){
+  const f=$("#quizFoot");
+  if(isHost){f.innerHTML=me?`<button class="linkbtn" data-f="offline">Play a round offline</button>`:"";return}
+  f.innerHTML=pinOpen
+    ?`<div class="field" style="width:100%"><input id="pinIn" type="password" inputmode="numeric" placeholder="Host PIN" autocomplete="off" style="text-transform:none"><button class="btn" data-f="pinGo">Unlock</button><button class="btn" data-f="pinX">Cancel</button></div>`
+    :`<button class="linkbtn" data-f="host">I'm the quizmaster</button>${me?`<span class="muted">·</span><button class="linkbtn" data-f="offline">No signal? Play a round offline</button>`:""}`;
+}
+$("#quizFoot").onclick=e=>{
+  const b=e.target.closest("[data-f]");if(!b)return;const f=b.dataset.f;
+  if(f==="host"){pinOpen=true;renderFoot();$("#pinIn").focus()}
+  if(f==="pinX"){pinOpen=false;renderFoot()}
+  if(f==="offline")openOffline();
+  if(f==="pinGo"){if($("#pinIn").value===HOST_PIN){isHost=true;lsSet("ant-host",true);pinOpen=false;renderQuiz();toast("Quizmaster controls unlocked")}else toast("Wrong host PIN.")}
+};
+$("#goOffline").onclick=()=>openOffline();
+
+/* ---------- offline round + answer code ---------- */
+function openOffline(){
+  const cur=qById(Q.cur);offRound=cur?cur.round:1;showCode=false;renderOffline();
+  $("#offlinePlay").scrollIntoView({behavior:"smooth",block:"start"});
+}
+function codeFor(r){
+  const a=offAns[r]||{};
+  return `${me.toUpperCase().replace(/[^A-Z]/g,"")}-${r}-${roundQs(r).map(q=>{const v=a[q.id]!=null?a[q.id]:myPicks[q.id];return v!=null?v+1:0}).join("")}`;
+}
+function renderOffline(){
+  const box=$("#offlinePlay");
+  if(!offRound||!me){box.hidden=true;setSync();return}
+  box.hidden=false;
+  const a=offAns[offRound]||{};
+  box.innerHTML=`<div class="panel" style="display:flex;flex-direction:column;gap:12px">
+   <div class="qmeta"><h2>Offline round</h2><button class="linkbtn" data-o="close">Close</button></div>
+   <p class="note" style="margin:0">Answer the round here. Questions you already locked in live are filled in for you. When you're done, read or message your code to the quizmaster.</p>
+   <div class="chips">${ROUNDS.map((r,i)=>`<button class="chip" aria-pressed="${offRound===i+1}" data-o="round" data-r="${i+1}">Round ${i+1}</button>`).join("")}</div>
+   ${showCode?`<div class="codeout" id="codeTxt">${esc(codeFor(offRound))}</div>
+     <div class="row2"><button class="btn primary" data-o="copy">Copy code</button><button class="btn" data-o="back">Back to answers</button></div>
+     <p class="note" style="margin:0">Each digit is one question: 1 to 4 means A to D, 0 means no answer.</p>`
+   :`${roundQs(offRound).map((q,qi)=>{
+      const v=a[q.id]!=null?a[q.id]:myPicks[q.id],locked=myPicks[q.id]!=null;
+      return `<div class="offq"><p>${qi+1}. ${esc(q.q)}</p><div class="opts">${q.opts.map((o,i)=>`<button class="opt ${v===i?"sel":""}" data-o="pick" data-q="${q.id}" data-i="${i}" ${locked?"disabled":""}><span class="L">${LET[i]}</span><span>${esc(o)}</span><span></span></button>`).join("")}</div></div>`}).join("")}
+     <button class="btn sail" data-o="code">Show my answer code</button>`}
+  </div>`;
+  setSync();
+}
+$("#offlinePlay").onclick=async e=>{
+  const b=e.target.closest("[data-o]");if(!b||b.disabled)return;const o=b.dataset.o;
+  if(o==="close"){offRound=null;renderOffline()}
+  if(o==="round"){offRound=+b.dataset.r;showCode=false;renderOffline()}
+  if(o==="pick"){const r=offRound;offAns[r]=offAns[r]||{};offAns[r][b.dataset.q]=+b.dataset.i;lsSet("ant-off",offAns);renderOffline()}
+  if(o==="code"){showCode=true;renderOffline()}
+  if(o==="back"){showCode=false;renderOffline()}
+  if(o==="copy"){const t=$("#codeTxt").textContent;try{await navigator.clipboard.writeText(t);toast("Code copied")}catch(err){const r=document.createRange();r.selectNodeContents($("#codeTxt"));const s=getSelection();s.removeAllRanges();s.addRange(r);toast("Code selected: copy it from here")}}
+};
+function renderQuiz(){renderWho();renderStage();renderHost();renderBoard();renderFoot();if(offRound)renderOffline();setSync()}
+
+/* ---------- HELM ---------- */
+const cv=$("#wheel"),ctx=cv.getContext("2d");
+let rot=0,spinning=false,lastSpin=undefined,wheelNames=null;
+const onDuty=()=>CREW.filter(n=>!H.off.includes(n));
+function drawWheel(){
+  const names=wheelNames||onDuty(),W=cv.width,c=W/2,rad=c-8,seg=Math.PI*2/Math.max(names.length,1);
+  ctx.clearRect(0,0,W,W);
+  if(!names.length){ctx.fillStyle=tok("--line");ctx.beginPath();ctx.arc(c,c,rad,0,7);ctx.fill();return}
+  names.forEach((n,i)=>{
+    const a0=rot+i*seg-Math.PI/2;
+    ctx.beginPath();ctx.moveTo(c,c);ctx.arc(c,c,rad,a0,a0+seg);ctx.closePath();
+    ctx.fillStyle=tok(CREW_TOK[CREW.indexOf(n)%CREW_TOK.length]);ctx.fill();
+    ctx.strokeStyle=tok("--bg");ctx.lineWidth=4;ctx.stroke();
+    ctx.save();ctx.translate(c,c);ctx.rotate(a0+seg/2);
+    ctx.fillStyle=tok("--onacc");ctx.font="600 34px Figtree, system-ui, sans-serif";ctx.textAlign="right";ctx.textBaseline="middle";
+    ctx.fillText(n,rad-28,0);ctx.restore();
+  });
+  ctx.beginPath();ctx.arc(c,c,46,0,7);ctx.fillStyle=tok("--surface");ctx.fill();
+  ctx.lineWidth=6;ctx.strokeStyle=tok("--ink");ctx.stroke();
+  for(let k=0;k<8;k++){const a=k*Math.PI/4;ctx.beginPath();ctx.moveTo(c+Math.cos(a)*14,c+Math.sin(a)*14);ctx.lineTo(c+Math.cos(a)*36,c+Math.sin(a)*36);ctx.lineWidth=5;ctx.stroke()}
+}
+function fmt(t){const d=new Date(t);return d.toLocaleDateString(undefined,{weekday:"short"})+" "+d.toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"})}
+function resultHtml(x){
+  if(!x)return `<span class="eyebrow">No draws yet</span><p class="muted">Spin to pick the first pilot.</p>`;
+  const left=onDuty().filter(n=>!H.done.includes(n));
+  return `<span class="eyebrow">At the helm</span><h2>${esc(x.n)}</h2>${H.fair?`<span class="eyebrow">${left.length&&H.done.length?`Still to go this round: ${left.map(esc).join(", ")}`:"New round: everyone's eligible"}</span>`:""}`;
+}
+function renderHelm(){
+  if(!loaded.helm)return;
+  const log=[...H.log].reverse();
+  $("#crew").innerHTML=CREW.map((n,i)=>`<button aria-pressed="${!H.off.includes(n)}" data-c="${esc(n)}"><span class="sw" style="background:var(${CREW_TOK[i%CREW_TOK.length]})"></span>${esc(n)}</button>`).join("");
+  $("#fair").checked=H.fair;
+  const counts=Object.fromEntries(CREW.map(n=>[n,0]));log.forEach(x=>{if(counts[x.n]!=null)counts[x.n]++});
+  $("#tally").innerHTML=log.length?CREW.map(n=>`<span>${esc(n)} <b>${counts[n]}</b></span>`).join(""):"";
+  $("#log").innerHTML=log.length?log.slice(0,20).map(x=>`<li><span>${esc(x.n)}</span><time>${fmt(x.t)}</time></li>`).join(""):`<li class="muted">No draws yet.</li>`;
+  $("#logReset").innerHTML=isHost&&log.length?`<button class="btn small" id="clearHelm">Clear helm log</button>`:"";
+  const top=log[0];
+  if(lastSpin===undefined){lastSpin=top?top.id:null;$("#result").innerHTML=resultHtml(top);drawWheel();return}
+  if(top&&top.id!==lastSpin){lastSpin=top.id;animateTo(top);return}
+  if(!spinning){$("#result").innerHTML=resultHtml(top);drawWheel()}
+}
+function animateTo(x){
+  wheelNames=(x.duty&&x.duty.length)?x.duty:onDuty();
+  const i=Math.max(0,wheelNames.indexOf(x.n)),seg=Math.PI*2/wheelNames.length,TAU=Math.PI*2;
+  let target=-(i+.5)*seg+(Math.random()-.5)*seg*.6;
+  while(target<rot+TAU*5)target+=TAU;
+  const from=rot,dur=matchMedia("(prefers-reduced-motion: reduce)").matches?10:4200,t0=performance.now();
+  spinning=true;$("#spinBtn").disabled=true;$("#result").innerHTML=`<span class="eyebrow">Spinning…</span>`;
+  (function step(now){
+    const p=Math.min(1,(now-t0)/dur),e=1-Math.pow(1-p,4);
+    rot=from+(target-from)*e;drawWheel();
+    if(p<1)return requestAnimationFrame(step);
+    rot=target%TAU;spinning=false;wheelNames=null;$("#spinBtn").disabled=false;
+    $("#result").innerHTML=resultHtml(x);drawWheel();
+  })(t0);
+}
+$("#spinBtn").onclick=async()=>{
+  if(spinning||busy)return;
+  if(cached){toast("The helm draw needs signal so everyone sees the same result.");return}
+  busy=true;$("#spinBtn").disabled=true;
+  try{
+    await runTransaction(db,async t=>{
+      const s=await t.get(REF.helm);
+      const h=Object.assign(blankH(),s.exists()?s.data():{});
+      const duty=CREW.filter(n=>!h.off.includes(n));
+      if(!duty.length)throw new Error("nobody");
+      let pool=duty;
+      if(h.fair){pool=duty.filter(n=>!h.done.includes(n));if(!pool.length){h.done=[];pool=duty}}
+      const who=pool[Math.floor(Math.random()*pool.length)];
+      if(h.fair&&!h.done.includes(who))h.done=[...h.done,who];
+      h.log=[...h.log,{n:who,t:Date.now(),id:Math.random().toString(36).slice(2,10),duty}].slice(-80);
+      t.set(REF.helm,h);
+    });
+  }catch(err){toast(err&&err.message==="nobody"?"Nobody is on duty. Tap a name to put them back.":"The spin didn't go through. Check your signal and try again.");$("#spinBtn").disabled=false}
+  busy=false;
+};
+$("#crew").onclick=e=>{const b=e.target.closest("[data-c]");if(!b||spinning)return;const n=b.dataset.c;
+  setDoc(REF.helm,{off:H.off.includes(n)?arrayRemove(n):arrayUnion(n)},{merge:true}).catch(()=>toast("That didn't go through."))};
+$("#fair").onchange=e=>{const on=e.target.checked;setDoc(REF.helm,on?{fair:true}:{fair:false,done:[]},{merge:true}).catch(()=>toast("That didn't go through."))};
+$("#logReset").onclick=e=>{
+  if(e.target.id==="clearHelm"){$("#logReset").innerHTML=`<span>Clear the helm log?</span><button class="btn sail small" id="clearYes">Yes, clear</button><button class="btn small" id="clearNo">Cancel</button>`;return}
+  if(e.target.id==="clearNo"){renderHelm();return}
+  if(e.target.id==="clearYes")setDoc(REF.helm,blankH()).catch(()=>toast("That didn't go through."));
+};
+if(window.matchMedia)matchMedia("(prefers-color-scheme: dark)").addEventListener("change",drawWheel);
+if(document.fonts)document.fonts.ready.then(drawWheel);
+
+/* ---------- live listeners ---------- */
+const opts={includeMetadataChanges:true};
+const onErr=()=>{cached=true;setSync()};
+onSnapshot(REF.quiz,opts,s=>{Q=Object.assign(blankQ(),s.exists()?s.data():{});loaded.quiz=true;cached=s.metadata.fromCache;renderQuiz()},onErr);
+onSnapshot(REF.answers,opts,s=>{A=s.exists()?s.data():{};loaded.answers=true;renderQuiz()},onErr);
+onSnapshot(REF.helm,opts,s=>{H=Object.assign(blankH(),s.exists()?s.data():{});loaded.helm=true;renderHelm()},onErr);
+
+/* ---------- boot ---------- */
+show(lsGet("ant-tab","route"));
+renderQuiz();drawWheel();
+</script>
+</body>
+</html>
