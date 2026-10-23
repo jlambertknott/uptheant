@@ -51,7 +51,7 @@ Question ids come from the round name plus question text, so editing a question 
 
 ## Live data (Firebase Firestore)
 
-The `trip` collection holds: `quiz` (current question, phase, revealed questions, offline code rounds), `answers` (`{questionId: {name: optionIndex}}`), `helm` (log, fair-turn tracker, who's off duty), `gallery` (`{photoKey: {t, by, at}}`, one caption per photo) and `journal` (`{entries: {id: {by, at, title, body, photo, comments[]}}}`). Each journal photo is a document of its own, `jp_<entryId>`, holding a compressed data URI, because Firestore caps one document at 1 MB; `shrink()` in the page scales and re-compresses until a photo fits inside that. Rules allow read/write on `trip/*` only, and the page only ever reads documents by name, never a collection query. Scores are worked out in the page from `answers` and the quiz key.
+The `trip` collection holds: `quiz` (current question, phase, revealed questions, offline code rounds), `answers` (`{questionId: {name: optionIndex}}`), `helm` (log, fair-turn tracker, who's off duty), `gallery` (`{photoKey: {t, by, at}}`, one caption per photo) and `journal` (`{entries: {id: {by, at, title, body, photo, comments[]}}}`, the Logbook tab). Each logbook photo is a document of its own, `jp_<entryId>`, holding a compressed data URI, because Firestore caps one document at 1 MB; `shrink()` in the page scales and re-compresses until a photo fits inside that. Rules allow read/write on `trip/*` only, and the page only ever reads documents by name, never a collection query. Scores are worked out in the page from `answers` and the quiz key.
 
 ## Checking a change
 

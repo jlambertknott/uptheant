@@ -124,8 +124,8 @@ details[open] .chev{transform:rotate(180deg)}
 
 /* journal */
 .jform{display:flex;flex-direction:column;gap:10px}
-.jform input,.jform textarea{width:100%;border:1px solid var(--line);border-radius:10px;padding:11px 12px;background:var(--bg);font-family:inherit}
-.jform textarea{resize:vertical;min-height:110px;line-height:1.5}
+.jform input,.jform textarea{width:100%;border:1px solid var(--line);border-radius:10px;padding:12px 13px;background:var(--bg);font-family:inherit;font-size:17px}
+.jform textarea{resize:none;min-height:150px;line-height:1.55}
 .filepick{display:inline-flex;align-items:center;gap:10px;border:1px dashed var(--line);border-radius:10px;padding:12px 14px;cursor:pointer;background:var(--bg);font-weight:600}
 .filepick input{display:none}
 .jprev{width:100%;max-height:220px;object-fit:cover;border-radius:10px;display:block}
@@ -289,7 +289,7 @@ footer{color:var(--muted);font-size:12.5px;padding-top:12px;border-top:1px solid
       <button role="tab" id="tab-quiz" aria-selected="false" data-view="quiz">Pub quiz</button>
       <button role="tab" id="tab-helm" aria-selected="false" data-view="helm">Helm draw</button>
       <button role="tab" id="tab-years" aria-selected="false" data-view="years">Across the Years</button>
-      <button role="tab" id="tab-journal" aria-selected="false" data-view="journal">Our Journal</button>
+      <button role="tab" id="tab-journal" aria-selected="false" data-view="journal">Logbook</button>
     </nav>
   </div>
 </header>
@@ -389,12 +389,8 @@ footer{color:var(--muted);font-size:12.5px;padding-top:12px;border-top:1px solid
   <div class="gal" id="gal"></div>
 </section>
 
-<!-- OUR JOURNAL -->
+<!-- LOGBOOK -->
 <section class="view" id="journal" hidden>
-  <div>
-    <span class="eyebrow">The logbook</span>
-    <h2 style="font-size:28px;margin-top:4px">Our Journal</h2>
-  </div>
   <div class="who whobar"></div>
   <div class="panel">
     <h2>Write an entry</h2>
