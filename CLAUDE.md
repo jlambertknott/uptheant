@@ -20,7 +20,7 @@ All content is near the top of the `<script type="module">` block:
 - `HOST_PIN`: the quizmaster PIN (currently 2026).
 - `firebaseConfig`: the live database connection. Don't change it.
 - `STOPS`: the route, in order. Fields: `name`, `river` ("bure" = dark blue line, "ant" = light blue, "dyke" = green), `label` (optional heading shown above the first stop of a new stretch of water), `sub`, `hist`, `geo`, `legend` (optional), `trivia`, `tags` (array).
-- `HIGHLIGHTS`: the three fact tiles at the top of the Route tab.
+- `HIGHLIGHTS`: the pool of fact tiles. Three are picked at random on each page load, so add to the pool rather than swapping facts in and out. Each entry is `[big bit, the rest]`; keep the big bit short.
 - `SPOT`: the wildlife checklist, as `[name, hint]` pairs.
 - `QUIZ`: one object per question:
   - `r`: round name. Rounds appear in the order they first occur.

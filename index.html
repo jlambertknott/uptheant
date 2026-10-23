@@ -215,6 +215,8 @@ footer{color:var(--muted);font-size:12.5px;padding-top:12px;border-top:1px solid
 .eat .top,.picks .top{font-family:var(--f-mono);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;background:var(--sail);color:var(--onacc);padding:2px 7px;border-radius:999px}
 .eat p{font-size:14.5px}
 .eat .tel{font-family:var(--f-mono);font-size:13px;color:var(--river);user-select:all}
+.eat li.flash{animation:eatflash 2.6s ease-out}
+@keyframes eatflash{0%,25%{background:var(--sail-soft);border-color:var(--sail)}100%{background:var(--bg);border-color:var(--line)}}
 .picks{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
 .picks button{width:100%;text-align:left;border:1px solid var(--line);background:var(--bg);border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;gap:2px}
 .picks button b{font-family:var(--f-display);font-weight:400;font-size:18px}
@@ -371,10 +373,28 @@ const STOPS = [
   {"name":"Neatishead","river":"dyke","art":"art-neatishead","label":"Limekiln Dyke","sub":"Up the dyke to Gay's Staithe","hist":"Neatishead is reached by Limekiln Dyke off the western side of Barton Broad. The name gives away its past: lime was burned here and shipped out by wherry. The White Horse is the village pub.","geo":"Gay's Staithe at the end of the dyke has moorings and the start of the Barton Boardwalk.","legend":"On the Neatishead side of Alderfen Broad is a spot called Heard's Hole, named after a man who drowned there. His spirit was said to haunt it as a will-o'-the-wisp light known as Neatishead Jack, smashing lanterns, pulling riders off their horses and following people home. Three men set out to lay him by reading scripture aloud, but he kept exactly one verse ahead of them the whole way, until a boy put down a couple of pigeons; while Jack was distracted the men caught up and bound him. The Rev John Gunn wrote it down in 1849.","trivia":"RAF Neatishead was a radar station from the Second World War through the Cold War. The old operations block is now the RAF Air Defence Radar Museum, home to a restored Cold War operations room. It's only open on certain days, so check before you go.","tags":["White Horse pub","Radar museum","Gay's Staithe"],"eat":[{"name":"The White Horse Inn","kind":"Gastropub","top":true,"note":"The best-reviewed pub on the route (4.7 from 150+ OpenTable reviews). Seasonal gastro menu, its own beers and gin, great Sunday roast, friendly staff. A 5 to 10 minute walk from the staithe. Book ahead.","tel":"01692 630828"}]},
   {"name":"Stalham","river":"dyke","art":"art-stalham","label":"Stalham Dyke","sub":"Finish: boatyards and the Museum of the Broads","hist":"Stalham is a small market town with a busy staithe, home to one of the biggest hire-boat yards on the Broads. Stalham Staithe also has the Museum of the Broads, packed with boats, tools and the story of how people lived and worked here.","geo":"Nearby Sutton Staithe has its own dyke. Further north, the Ant runs on past Wayford Bridge towards the North Walsham & Dilham Canal, opened in 1826 and Norfolk's only true canal.","legend":"Five miles up the Stalham road at Happisburgh there is a grassy triangle once known as Well Corner, and later Pump Hill. In the late 1600s a figure with no legs and its head half off was seen carrying a bundle along the street at night. Two men followed it to the well and watched it throw the bundle in. They dragged the well the next morning and found a pair of legs, and then the rest of him: a smuggler, the story goes, who had fallen out with his gang. The well became a pump, the pump was taken away in the early 1900s, and nobody has seen him since.","trivia":"Sutton Mill, just outside Stalham, is a nine-storey windmill from 1789 and is said to be the tallest windmill in Britain.","tags":["Museum of the Broads","Sutton Mill nearby","End of the line"],"eat":[{"name":"The Swan Inn","kind":"Pub","note":"Family-run pub on the High Street with a daily specials board and Sunday roasts. Food 12 to 3 and 5 to 8:30. Short walk from Stalham Staithe.","tel":"01692 582829"},{"name":"Sutton Staithe Hotel","kind":"Pub & hotel","note":"Pub at the end of Sutton Dyke, next door to Stalham. Well liked on the boating forums.","tel":"01692 580244"},{"name":"The Ingham Swan","kind":"Fine dining","top":true,"note":"The splurge option: a 14th-century inn turned restaurant with three AA rosettes, chef Daniel Smith (ex-Le Gavroche). Set lunch is good value; à la carte is pricey. A short taxi ride from Stalham. Book well ahead."},{"name":"Wayford Bridge Inn","kind":"Pub & hotel","note":"Further up the Ant at Wayford Bridge. Recently changed hands and reviews are mixed, so check before you plan a meal there."}]}
 ];
+/* HIGHLIGHTS: the pool of fact tiles. Three are picked at random each time the
+   page is opened, so the top of the Route tab is different on every refresh.
+   Keep the first bit short: it's the big number. Add as many as you like. */
 const HIGHLIGHTS = [
   ["~125 mi","of lock-free navigable water across the Broads"],
   ["1950s","when Dr Joyce Lambert proved the broads are flooded medieval peat pits"],
-  ["2nd","Barton Broad's rank among the broads by size, after Hickling"]
+  ["2nd","Barton Broad's rank among the broads by size, after Hickling"],
+  ["7","rivers in the Broads. The Ant is the smallest you can cruise"],
+  ["60+","broads and open waters, nearly all of them man-made"],
+  ["4 m","is deeper than most of the broads ever get"],
+  ["c.1020","when St Benet's Abbey was founded, backed by King Cnut"],
+  ["1536","the Act that spared St Benet's from Henry VIII"],
+  ["1619","the year Wroxham Bridge went up. Still one of the lowest"],
+  ["1789","Sutton Mill: nine storeys, and the tallest windmill in Britain"],
+  ["1895","when Roys of Wroxham opened. Now the world's largest village store"],
+  ["1934","when Arthur Ransome set Coot Club on these rivers"],
+  ["50 yrs","how long a Norfolk reed roof lasts before it needs redoing"],
+  ["Only here","the swallowtail butterfly lives on the Broads and nowhere else in Britain"],
+  ["9 miles","of 15-inch gauge railway from Wroxham up to Aylsham"],
+  ["1809","when the lantern men are said to have taken Joseph Bexfield"],
+  ["25 May","the night Essric the traitor monk is said to scream at St Benet's"],
+  ["1988","the Act of Parliament that made the Broads a national park in all but name"]
 ];
 const SPOT = [
   ["Swallowtail butterfly","Britain's biggest butterfly; here and nowhere else in the UK"],
@@ -478,17 +498,30 @@ function show(v){
 document.querySelectorAll("nav.tabs button").forEach(b=>b.onclick=()=>{show(b.dataset.view);window.scrollTo(0,0)});
 
 /* ---------- ROUTE ---------- */
-$("#facts").innerHTML=HIGHLIGHTS.map(h=>`<div class="fact"><b>${esc(h[0])}</b><span>${esc(h[1])}</span></div>`).join("");
-const PICKS=STOPS.flatMap((s,i)=>(s.eat||[]).filter(e=>e.top).map(e=>({...e,stop:s.name,i})));
-$("#picks").innerHTML=PICKS.length?`<div class="panel"><h2>Where to eat</h2><p>The best-reviewed places on the route. Tap one to see it on the route.</p><ul class="picks">${PICKS.map(p=>`<li><button data-stop="${p.i}"><b>${esc(p.name)}</b><span>${esc(p.kind)} · ${esc(p.stop)}</span></button></li>`).join("")}</ul><p class="note" style="margin:10px 0 0">Based on Tripadvisor, OpenTable, restaurant guides and boating forums, October 2026. Winter opening hours vary, so ring ahead.</p></div>`:"";
-$("#picks").onclick=e=>{const b=e.target.closest("[data-stop]");if(!b)return;const st=document.querySelectorAll("#routeList .stop")[+b.dataset.stop];const d=st.querySelector("details");d.open=true;st.scrollIntoView({behavior:"smooth",block:"start"})};
+const someOf=(a,n)=>{const c=[...a];for(let i=c.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[c[i],c[j]]=[c[j],c[i]]}return c.slice(0,n)};
+$("#facts").innerHTML=someOf(HIGHLIGHTS,3).map(h=>`<div class="fact"><b>${esc(h[0])}</b><span>${esc(h[1])}</span></div>`).join("");
+const PICKS=STOPS.flatMap((s,i)=>(s.eat||[]).map((e,ei)=>({...e,stop:s.name,i,ei})).filter(e=>e.top));
+$("#picks").innerHTML=PICKS.length?`<div class="panel"><h2>Where to eat</h2><p>The best-reviewed places on the route. Tap one to see it on the route.</p><ul class="picks">${PICKS.map(p=>`<li><button data-stop="${p.i}" data-eat="${p.i}-${p.ei}"><b>${esc(p.name)}</b><span>${esc(p.kind)} · ${esc(p.stop)}</span></button></li>`).join("")}</ul><p class="note" style="margin:10px 0 0">Based on Tripadvisor, OpenTable, restaurant guides and boating forums, October 2026. Winter opening hours vary, so ring ahead.</p></div>`:"";
+/* Scroll something into view below the sticky header, which scrollIntoView ignores. */
+function scrollToCard(el){
+  const top=el.getBoundingClientRect().top+window.scrollY-$("header.top").offsetHeight-10;
+  window.scrollTo({top:Math.max(0,top),behavior:"smooth"});
+}
+$("#picks").onclick=e=>{
+  const b=e.target.closest("[data-stop]");if(!b)return;
+  const st=document.querySelectorAll("#routeList .stop")[+b.dataset.stop];if(!st)return;
+  st.querySelector("details").open=true;
+  const li=st.querySelector(`[data-eat="${b.dataset.eat}"]`)||st;
+  scrollToCard(li);
+  li.classList.remove("flash");void li.offsetWidth;li.classList.add("flash");
+};
 $("#routeList").innerHTML=STOPS.map((s,i)=>`
  <div class="stop ${s.river==="ant"?"ant":s.river==="dyke"?"dyke":""}">
   <div class="rail"><span class="node">${i+1}</span></div>
   <div class="card">
    ${s.label?`<div class="river-label">${esc(s.label)}</div>`:""}
    ${s.art?`<div class="shot"><svg aria-hidden="true"><use href="#${esc(s.art)}"/></svg></div>`:""}
-   <details ${i===0?"open":""}>
+   <details>
     <summary><div><h3>${esc(s.name)}</h3><div class="sub">${esc(s.sub)}</div></div>
      <svg class="chev" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary>
     <div class="body">
@@ -496,7 +529,7 @@ $("#routeList").innerHTML=STOPS.map((s,i)=>`
      ${s.geo?`<div><h4>On the water</h4><p>${esc(s.geo)}</p></div>`:""}
      ${s.legend?`<div><h4>Legend</h4><p>${esc(s.legend)}</p></div>`:""}
      ${s.trivia?`<div class="trivia"><h4>Trivia</h4><p>${esc(s.trivia)}</p></div>`:""}
-     ${(s.eat||[]).length?`<div><h4>Eat &amp; drink</h4><ul class="eat">${s.eat.map(e=>`<li><div class="eat-h"><b>${esc(e.name)}</b><span class="kind">${esc(e.kind)}</span>${e.top?`<span class="top">Top pick</span>`:""}</div><p>${esc(e.note)}</p>${e.tel?`<span class="tel">${esc(e.tel)}</span>`:""}</li>`).join("")}</ul></div>`:""}
+     ${(s.eat||[]).length?`<div><h4>Eat &amp; drink</h4><ul class="eat">${s.eat.map((e,ei)=>`<li data-eat="${i}-${ei}"><div class="eat-h"><b>${esc(e.name)}</b><span class="kind">${esc(e.kind)}</span>${e.top?`<span class="top">Top pick</span>`:""}</div><p>${esc(e.note)}</p>${e.tel?`<span class="tel">${esc(e.tel)}</span>`:""}</li>`).join("")}</ul></div>`:""}
      <div class="tags">${(s.tags||[]).map(t=>`<span class="tag">${esc(t)}</span>`).join("")}</div>
     </div>
    </details>
