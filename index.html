@@ -104,23 +104,41 @@ details[open] .chev{transform:rotate(180deg)}
 .tags{display:flex;flex-wrap:wrap;gap:6px}
 .tag{font-size:12.5px;padding:3px 9px;border-radius:999px;background:var(--river-soft)}
 
+/* the notification banner */
+.noti{position:fixed;top:0;left:0;right:0;z-index:30;display:flex;gap:4px;align-items:stretch;
+  padding:calc(8px + env(safe-area-inset-top,0px)) 10px 8px;background:#12262B;color:#F6FAF8;  /* fixed dark: a bright banner at night on the boat is horrible */
+  box-shadow:0 6px 20px rgba(0,0,0,.22);animation:notiIn .22s ease-out}
+@keyframes notiIn{from{transform:translateY(-100%)}to{transform:translateY(0)}}
+.noti .msg{flex:1;min-width:0;text-align:left;background:none;border:0;color:inherit;font-size:15px;
+  line-height:1.35;padding:6px 6px 6px 8px}
+.noti .msg b{font-family:var(--f-display);font-weight:400}
+.noti button.ctl{flex:none;background:rgba(255,255,255,.14);border:0;color:inherit;border-radius:8px;
+  width:38px;font-size:16px;line-height:1}
+@media (prefers-reduced-motion:reduce){.noti{animation:none}}
+
 /* gallery */
-.gal{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px}
+.gal{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;align-items:start}
 .gcard{margin:0;border:1px solid var(--line);border-radius:12px;background:var(--surface);overflow:hidden;display:flex;flex-direction:column}
 .gimg{display:block;width:100%;padding:0;border:0;background:var(--river-soft);line-height:0}
-.gimg img{display:block;width:100%;aspect-ratio:4/3;object-fit:cover}
+.gimg img{display:block;width:100%;height:auto}
+.gdate{font-family:var(--f-mono);font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);padding:9px 12px 0}
 .gcard figcaption{padding:10px 12px 0;font-size:15px}
 .gcard figcaption b{font-family:var(--f-display);font-weight:400;font-size:18px;display:block;line-height:1.2}
 .gcard figcaption .by{font-family:var(--f-mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
 .gcard > .linkbtn{align-self:flex-start;margin:8px 12px 12px}
 .capedit{padding:10px 12px 12px;display:flex;flex-direction:column;gap:8px}
 .capedit input{width:100%;border:1px solid var(--line);border-radius:8px;padding:9px 10px;background:var(--bg)}
-#lightbox{position:fixed;inset:0;z-index:20;background:rgba(6,18,20,.92);display:grid;place-items:center;padding:16px;gap:12px;grid-auto-rows:min-content}
-#lightbox img{max-width:100%;max-height:78vh;border-radius:10px;display:block}
-.lbcap{color:#F6FAF8;text-align:center;max-width:46ch}
-.lbcap b{font-family:var(--f-display);font-weight:400;font-size:21px;display:block}
-.lbcap span{font-family:var(--f-mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;opacity:.75}
-.lbx{position:absolute;top:calc(12px + env(safe-area-inset-top,0px));right:14px;width:40px;height:40px;border-radius:50%;border:0;background:rgba(255,255,255,.15);color:#fff;font-size:24px;line-height:1}
+#lightbox{position:fixed;inset:0;z-index:40;background:#0a1416;display:grid;place-items:center;touch-action:pan-y}
+#lightbox img{max-width:100vw;max-height:100dvh;width:auto;height:auto;display:block}
+.lbcap{position:absolute;left:0;right:0;bottom:0;padding:48px 20px calc(20px + env(safe-area-inset-bottom,0px));color:#F6FAF8;text-align:center;
+  background:linear-gradient(to top,rgba(6,16,18,.92),rgba(6,16,18,0));pointer-events:none}
+.lbcap b{font-family:var(--f-display);font-weight:400;font-size:22px;display:block;line-height:1.2}
+.lbcap span{font-family:var(--f-mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;opacity:.8}
+.lbx{position:absolute;top:calc(12px + env(safe-area-inset-top,0px));right:14px;width:44px;height:44px;border-radius:50%;border:0;background:rgba(255,255,255,.18);color:#fff;font-size:26px;line-height:1;z-index:2}
+.lbnav{position:absolute;top:50%;transform:translateY(-50%);width:46px;height:70px;border:0;border-radius:10px;background:rgba(255,255,255,.14);color:#fff;font-size:30px;line-height:1;z-index:2}
+.lbnav.prev{left:8px}.lbnav.next{right:8px}
+.lbnav:disabled{opacity:.25}
+.lbcount{position:absolute;top:calc(20px + env(safe-area-inset-top,0px));left:18px;color:#F6FAF8;font-family:var(--f-mono);font-size:12px;opacity:.8;z-index:2}
 
 /* journal */
 .jform{display:flex;flex-direction:column;gap:10px}
@@ -288,8 +306,8 @@ footer{color:var(--muted);font-size:12.5px;padding-top:12px;border-top:1px solid
       <button role="tab" id="tab-route" aria-selected="true" data-view="route">Route</button>
       <button role="tab" id="tab-quiz" aria-selected="false" data-view="quiz">Pub quiz</button>
       <button role="tab" id="tab-helm" aria-selected="false" data-view="helm">Helm draw</button>
-      <button role="tab" id="tab-years" aria-selected="false" data-view="years">Across the Years</button>
       <button role="tab" id="tab-journal" aria-selected="false" data-view="journal">Logbook</button>
+      <button role="tab" id="tab-years" aria-selected="false" data-view="years">Across the Years</button>
     </nav>
   </div>
 </header>
@@ -408,6 +426,7 @@ footer{color:var(--muted);font-size:12.5px;padding-top:12px;border-top:1px solid
 
 <footer>Made for six: Jimmy, Anna, Pippa, Simon, Sally and Charly. Opening times for museums and pubs change, so check before you moor up for them.</footer>
 </main>
+<div class="noti" id="noti" role="status" aria-live="polite" hidden></div>
 <div class="toast" id="toast" role="status" hidden></div>
 <div id="lightbox" hidden></div>
 
@@ -885,6 +904,8 @@ function animateTo(x){
     if(p<1)return requestAnimationFrame(step);
     rot=target%TAU;spinning=false;wheelNames=null;$("#spinBtn").disabled=false;
     pending=null;renderHelm();   // the wheel has stopped, so the log can show it now
+    if(x.by&&x.by!==me)
+      notify(`<b>${esc(x.by)}</b> has spun the helm draw and it chose <b>${esc(x.n)}</b> as the next pilot`,"helm");
   })(t0);
 }
 $("#spinBtn").onclick=async()=>{
@@ -901,7 +922,7 @@ $("#spinBtn").onclick=async()=>{
       if(h.fair){pool=duty.filter(n=>!h.done.includes(n));if(!pool.length){h.done=[];pool=duty}}
       const who=pool[Math.floor(Math.random()*pool.length)];
       if(h.fair&&!h.done.includes(who))h.done=[...h.done,who];
-      h.log=[...h.log,{n:who,t:Date.now(),id:Math.random().toString(36).slice(2,10),duty}].slice(-80);
+      h.log=[...h.log,{n:who,t:Date.now(),id:Math.random().toString(36).slice(2,10),duty,by:me||null}].slice(-80);
       t.set(REF.helm,h);
     });
   }catch(err){toast(err&&err.message==="nobody"?"Nobody is on duty. Tap a name to put them back.":"The spin didn't go through. Check your signal and try again.");$("#spinBtn").disabled=false}
@@ -917,6 +938,64 @@ $("#logReset").onclick=e=>{
 };
 if(window.matchMedia)matchMedia("(prefers-color-scheme: dark)").addEventListener("change",drawWheel);
 if(document.fonts)document.fonts.ready.then(drawWheel);
+
+/* ---------- NOTIFICATIONS ---------- */
+/* A banner plus a ping whenever somebody else captions a photo, writes in the
+   logbook or spins the helm. Never fires for your own doing, and never for
+   what was already there when you opened the page. */
+let notiQ=[],notiT=null,muted=lsGet("ant-mute",false),actx=null;
+
+function ping(){
+  if(muted)return;
+  try{
+    actx=actx||new (window.AudioContext||window.webkitAudioContext)();
+    if(actx.state==="suspended")actx.resume();
+    const t0=actx.currentTime;
+    [[988,0],[1319,.11]].forEach(([hz,off])=>{
+      const o=actx.createOscillator(),g=actx.createGain();
+      o.type="sine";o.frequency.value=hz;
+      g.gain.setValueAtTime(0,t0+off);
+      g.gain.linearRampToValueAtTime(.16,t0+off+.012);
+      g.gain.exponentialRampToValueAtTime(.0001,t0+off+.38);
+      o.connect(g);g.connect(actx.destination);
+      o.start(t0+off);o.stop(t0+off+.42);
+    });
+  }catch(e){}
+}
+/* browsers only allow sound after a tap, so wake the audio on the first one */
+addEventListener("pointerdown",()=>{
+  try{actx=actx||new (window.AudioContext||window.webkitAudioContext)();
+      if(actx.state==="suspended")actx.resume()}catch(e){}
+},{once:true});
+
+function notify(html,tab){
+  notiQ.push({html,tab});
+  if(!notiT)nextNoti();
+}
+function nextNoti(){
+  clearTimeout(notiT);
+  const n=notiQ.shift();
+  const el=$("#noti");
+  if(!n){notiT=null;el.hidden=true;el.innerHTML="";return}
+  el.innerHTML=`<button class="msg" data-noti-go="${esc(n.tab||"")}">${n.html}</button>
+    <button class="ctl" data-noti-mute="1" aria-label="${muted?"Turn the ping back on":"Mute the ping"}">${muted?"&#128263;":"&#128266;"}</button>
+    <button class="ctl" data-noti-x="1" aria-label="Dismiss">&times;</button>`;
+  el.hidden=false;
+  ping();
+  notiT=setTimeout(nextNoti,6000);
+}
+$("#noti").onclick=e=>{
+  if(e.target.closest("[data-noti-mute]")){
+    muted=!muted;lsSet("ant-mute",muted);
+    const b=e.target.closest("[data-noti-mute]");
+    b.innerHTML=muted?"&#128263;":"&#128266;";
+    toast(muted?"Pings muted on this phone":"Pings back on");
+    return;
+  }
+  if(e.target.closest("[data-noti-x]"))return nextNoti();
+  const go=e.target.closest("[data-noti-go]");
+  if(go){const t=go.dataset.notiGo;if(t){show(t);window.scrollTo(0,0)}nextNoti()}
+};
 
 /* ---------- ACROSS THE YEARS ---------- */
 /* Photos come from the photos/ folder in the repo; the publish workflow resizes
@@ -936,13 +1015,15 @@ function renderGallery(){
     el.innerHTML=`<div class="panel"><h2>No photos yet</h2><p>Drop photos into the <b>photos</b> folder of the GitHub repo. They get resized for phones automatically and turn up here about a minute later, ready to be captioned.</p></div>`;
     return;
   }
-  el.innerHTML=PHOTOS.map(p=>{
+  el.innerHTML=PHOTOS.map((p,i)=>{
     const k=keyFor(p.file),c=G[k];
     const body=capFor===p.file
       ?`<div class="capedit"><input id="capIn" maxlength="120" placeholder="Something daft" value="${esc(capDraft)}"><div class="row2"><button class="btn primary small" data-capsave="${esc(p.file)}">Save</button><button class="btn small" data-capx="1">Cancel</button></div></div>`
       :`<figcaption>${c&&c.t?`<b>${esc(c.t)}</b><span class="by">${esc(c.by||"")}</span>`:`<span class="muted">No caption yet</span>`}</figcaption>
         <button class="linkbtn" data-cap="${esc(p.file)}">${c&&c.t?"Change the caption":"Add a caption"}</button>`;
-    return `<figure class="gcard"><button class="gimg" data-big="${esc(p.file)}"><img src="${photoUrl(p.file,1)}" alt="${esc(p.name||"")}" loading="lazy"></button>${body}</figure>`;
+    const ar=p.w&&p.h?`style="aspect-ratio:${p.w}/${p.h}"`:"";
+    return `<figure class="gcard"><button class="gimg" data-big="${i}"><img src="${photoUrl(p.file,1)}" alt="${esc(p.name||"")}" ${ar} loading="lazy"></button>
+      ${p.name?`<div class="gdate">${esc(p.name)}</div>`:""}${body}</figure>`;
   }).join("");
   const i=$("#capIn");if(i){i.focus();i.oninput=()=>{capDraft=i.value}}
 }
@@ -960,14 +1041,46 @@ $("#gal").onclick=e=>{
     renderGallery();
   }
 };
-function openBig(file){
-  const p=PHOTOS.find(x=>x.file===file);if(!p)return;
-  const c=G[keyFor(file)],lb=$("#lightbox");
-  lb.innerHTML=`<button class="lbx" data-lbx="1" aria-label="Close">&times;</button><img src="${photoUrl(file)}" alt="${esc(p.name||"")}">${c&&c.t?`<div class="lbcap"><b>${esc(c.t)}</b><span>${esc(c.by||"")}</span></div>`:""}`;
-  lb.hidden=false;document.body.style.overflow="hidden";
+let lbAt=-1;
+function openBig(i){
+  lbAt=Math.max(0,Math.min(PHOTOS.length-1,+i));
+  document.body.style.overflow="hidden";
+  drawBig();
 }
-$("#lightbox").onclick=()=>{$("#lightbox").hidden=true;$("#lightbox").innerHTML="";document.body.style.overflow=""};
-addEventListener("keydown",e=>{if(e.key==="Escape"&&!$("#lightbox").hidden)$("#lightbox").click()});
+function drawBig(){
+  const p=PHOTOS[lbAt];if(!p)return closeBig();
+  const c=G[keyFor(p.file)],lb=$("#lightbox");
+  const line=[p.name,c&&c.by?"captioned by "+c.by:""].filter(Boolean).join(" · ");
+  lb.innerHTML=`<img src="${photoUrl(p.file)}" alt="${esc(p.name||"")}">
+    <span class="lbcount">${lbAt+1} / ${PHOTOS.length}</span>
+    <button class="lbx" data-lbx="1" aria-label="Close">&times;</button>
+    ${PHOTOS.length>1?`<button class="lbnav prev" data-lbstep="-1" aria-label="Previous photo" ${lbAt===0?"disabled":""}>&lsaquo;</button>
+    <button class="lbnav next" data-lbstep="1" aria-label="Next photo" ${lbAt===PHOTOS.length-1?"disabled":""}>&rsaquo;</button>`:""}
+    <div class="lbcap">${c&&c.t?`<b>${esc(c.t)}</b>`:""}<span>${esc(line)}</span></div>`;
+  lb.hidden=false;
+}
+function stepBig(d){const n=lbAt+d;if(n<0||n>=PHOTOS.length)return;lbAt=n;drawBig()}
+function closeBig(){lbAt=-1;$("#lightbox").hidden=true;$("#lightbox").innerHTML="";document.body.style.overflow=""}
+$("#lightbox").onclick=e=>{
+  const st=e.target.closest("[data-lbstep]");
+  if(st)return stepBig(+st.dataset.lbstep);
+  if(e.target.closest("[data-lbx]"))return closeBig();
+  if(e.target.tagName!=="IMG")closeBig();            // tapping the backdrop closes, the photo doesn't
+};
+addEventListener("keydown",e=>{
+  if($("#lightbox").hidden)return;
+  if(e.key==="Escape")closeBig();
+  if(e.key==="ArrowLeft")stepBig(-1);
+  if(e.key==="ArrowRight")stepBig(1);
+});
+let swipeX=null,swipeY=null;
+$("#lightbox").addEventListener("touchstart",e=>{swipeX=e.touches[0].clientX;swipeY=e.touches[0].clientY},{passive:true});
+$("#lightbox").addEventListener("touchend",e=>{
+  if(swipeX==null)return;
+  const dx=e.changedTouches[0].clientX-swipeX,dy=e.changedTouches[0].clientY-swipeY;
+  if(Math.abs(dx)>50&&Math.abs(dx)>Math.abs(dy))stepBig(dx<0?1:-1);
+  swipeX=swipeY=null;
+},{passive:true});
 
 /* ---------- OUR JOURNAL ---------- */
 /* One small document holds the text of every entry; each photo gets a document
@@ -1076,8 +1189,38 @@ const onErr=()=>{cached=true;setSync()};
 onSnapshot(REF.quiz,opts,s=>{Q=Object.assign(blankQ(),s.exists()?s.data():{});loaded.quiz=true;cached=s.metadata.fromCache;renderQuiz()},onErr);
 onSnapshot(REF.answers,opts,s=>{A=s.exists()?s.data():{};loaded.answers=true;renderQuiz()},onErr);
 onSnapshot(REF.helm,opts,s=>{H=Object.assign(blankH(),s.exists()?s.data():{});loaded.helm=true;renderHelm()},onErr);
-onSnapshot(REF.gallery,opts,s=>{G=s.exists()?s.data():{};loadedG=true;renderGallery()},onErr);
-onSnapshot(REF.journal,opts,s=>{J=Object.assign({entries:{}},s.exists()?s.data():{});loadedJ=true;renderJournal()},onErr);
+let seenCaps=null;
+onSnapshot(REF.gallery,opts,s=>{
+  G=s.exists()?s.data():{};
+  if(seenCaps===null)seenCaps=Object.fromEntries(Object.keys(G).map(k=>[k,(G[k]||{}).at||0]));
+  else Object.keys(G).forEach(k=>{
+    const c=G[k]||{},was=seenCaps[k]||0;
+    if(c.at&&c.at>was&&c.by&&c.by!==me)
+      notify(`<b>${esc(c.by)}</b> has just added a caption: &ldquo;${esc(c.t||"")}&rdquo;`,"years");
+    seenCaps[k]=c.at||0;
+  });
+  loadedG=true;renderGallery();
+},onErr);
+let seenEntries=null;
+onSnapshot(REF.journal,opts,s=>{
+  J=Object.assign({entries:{}},s.exists()?s.data():{});
+  const E=J.entries||{};
+  const count=id=>((E[id]||{}).comments||[]).length;
+  if(seenEntries===null)seenEntries=Object.fromEntries(Object.keys(E).map(id=>[id,count(id)]));
+  else Object.keys(E).forEach(id=>{
+    const e=E[id]||{};
+    if(!(id in seenEntries)){
+      if(e.by&&e.by!==me)
+        notify(`<b>${esc(e.by)}</b> has added a new logbook entry called &ldquo;${esc(e.title||"Untitled")}&rdquo;`,"journal");
+    }else if(count(id)>seenEntries[id]){
+      const last=(e.comments||[])[count(id)-1]||{};
+      if(last.by&&last.by!==me)
+        notify(`<b>${esc(last.by)}</b> commented on &ldquo;${esc(e.title||"Untitled")}&rdquo;`,"journal");
+    }
+    seenEntries[id]=count(id);
+  });
+  loadedJ=true;renderJournal();
+},onErr);
 
 /* ---------- boot ---------- */
 show(lsGet("ant-tab","route"));

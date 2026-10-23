@@ -102,7 +102,10 @@ jobs:
                   big.save(f"_site/photos/{slug}.jpg", quality=82, optimize=True, progressive=True)
                   th = im.copy(); th.thumbnail((700, 700), Image.LANCZOS)
                   th.save(f"_site/photos/t/{slug}.jpg", quality=78, optimize=True)
-                  out.append({"file": slug + ".jpg", "name": display_name(stem)})
+                  # w/h let the page reserve the right shape before the photo loads,
+                  # so portrait shots aren't cropped and the grid doesn't jump about
+                  out.append({"file": slug + ".jpg", "name": display_name(stem),
+                              "w": th.width, "h": th.height})
               else:
                   ext = os.path.splitext(f)[1].lower()               # last resort: publish as-is
                   shutil.copyfile(f, f"_site/photos/{slug}{ext}")
