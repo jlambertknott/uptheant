@@ -53,8 +53,8 @@ button:focus-visible,summary:focus-visible,input:focus-visible{outline:2px solid
 header.top{position:sticky;top:0;z-index:5;background:var(--bg);border-bottom:1px solid var(--line);padding-top:env(safe-area-inset-top,0px)}
 .top .wrap{padding-block:12px 0}
 .brand h1{font-size:26px}
-nav.tabs{display:flex;gap:2px;margin-top:10px;flex-wrap:wrap;justify-content:center}
-nav.tabs button{flex:0 1 auto;white-space:nowrap;background:none;border:0;border-bottom:3px solid transparent;padding:10px 11px 9px;font-weight:600;color:var(--muted);font-size:15px}
+nav.tabs{display:flex;gap:0;margin-top:10px;flex-wrap:nowrap;justify-content:space-between}
+nav.tabs button{flex:0 0 auto;white-space:nowrap;background:none;border:0;border-bottom:3px solid transparent;padding:10px clamp(2px,1.3vw,9px) 9px;font-weight:600;color:var(--muted);font-size:clamp(10px,3.1vw,15px)}
 nav.tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--sail)}
 main{padding-block:24px 64px}
 section.view{display:flex;flex-direction:column;gap:28px}
@@ -376,8 +376,6 @@ footer{color:var(--muted);font-size:12.5px;padding-top:12px;border-top:1px solid
   </div>
 </section>
 
-<footer>Made for six: Jimmy, Anna, Pippa, Simon, Sally and Charly. Opening times for museums and pubs change, so check before you moor up for them.</footer>
-</main>
 <!-- ACROSS THE YEARS -->
 <section class="view" id="years" hidden>
   <div>
@@ -408,6 +406,8 @@ footer{color:var(--muted);font-size:12.5px;padding-top:12px;border-top:1px solid
   <div id="journalList"></div>
 </section>
 
+<footer>Made for six: Jimmy, Anna, Pippa, Simon, Sally and Charly. Opening times for museums and pubs change, so check before you moor up for them.</footer>
+</main>
 <div class="toast" id="toast" role="status" hidden></div>
 <div id="lightbox" hidden></div>
 
@@ -562,6 +562,7 @@ const roundQs=r=>QS.filter(q=>q.round===r);
 /* ---------- tabs ---------- */
 function show(v){
   document.querySelectorAll(".view").forEach(s=>s.hidden=s.id!==v);
+  $("footer").hidden=(v==="years"||v==="journal");
   document.querySelectorAll("nav.tabs button").forEach(b=>b.setAttribute("aria-selected",b.dataset.view===v));
   lsSet("ant-tab",v);
   if(v==="helm")drawWheel();
