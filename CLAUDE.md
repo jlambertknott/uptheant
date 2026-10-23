@@ -42,9 +42,16 @@ The drawings are hand-made SVG, not photos, so there are no image files to uploa
 
 Question ids come from the round name plus question text, so editing a question that has already been asked mid-quiz detaches the answers to it. Avoid editing questions during a live quiz unless James asks.
 
+## Photos (the Across the Years tab)
+
+- Photos live in the `photos/` folder in the repo. James adds them through GitHub's "Add files via upload" (25 MB per file through the browser).
+- The **Publish site** workflow resizes each one into `_site/photos/` (long edge 1600) and `_site/photos/t/` (thumbnails, 700), and writes `_site/photos.json`, which is what the page reads. Nothing in `index.html` needs editing when a photo is added.
+- Name a file `01-whatever.jpg` to control the order; the number is stripped for the display name.
+- Captions are written in the app, not in the filename, and live in Firestore.
+
 ## Live data (Firebase Firestore)
 
-The `trip` collection holds three documents: `quiz` (current question, phase, revealed questions, offline code rounds), `answers` (`{questionId: {name: optionIndex}}`) and `helm` (log, fair-turn tracker, who's off duty). Rules allow read/write on `trip/*` only. Scores are worked out in the page from `answers` and the quiz key.
+The `trip` collection holds: `quiz` (current question, phase, revealed questions, offline code rounds), `answers` (`{questionId: {name: optionIndex}}`), `helm` (log, fair-turn tracker, who's off duty), `gallery` (`{photoKey: {t, by, at}}`, one caption per photo) and `journal` (`{entries: {id: {by, at, title, body, photo, comments[]}}}`). Each journal photo is a document of its own, `jp_<entryId>`, holding a compressed data URI, because Firestore caps one document at 1 MB; `shrink()` in the page scales and re-compresses until a photo fits inside that. Rules allow read/write on `trip/*` only, and the page only ever reads documents by name, never a collection query. Scores are worked out in the page from `answers` and the quiz key.
 
 ## Checking a change
 
