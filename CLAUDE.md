@@ -49,6 +49,7 @@ Question ids come from the round name plus question text, so editing a question 
 - The resizing uses Pillow, installed by the workflow's shell *before* the Python that uses it starts. Don't move that install inside the Python script: a package installed into the user site directory mid-process isn't importable by that process. If Pillow can't be installed the photos are published at their original size rather than failing the build.
 - Name a file `01-whatever.jpg` to control the order; the number is stripped for the display name.
 - Captions are written in the full-screen view (tap a photo), not on the grid, and live in Firestore. Each photo's date is taken from its filename and shown under it.
+- The viewer is a flex column: the photo in `.lbstage`, the caption in `.lbbar` beneath it, never on top of it. `fitViewer()` pins the whole thing to `visualViewport`, so an open keyboard shrinks the photo instead of covering the caption box. A photo with no caption shows the box ready to type in; one with a caption shows the caption and a Change button. The box is never auto-focused, or the keyboard would jump up every time you swiped to an uncaptioned photo.
 - `photos.json` carries `w`/`h` for each photo so the grid can reserve the right shape: photos are never cropped, in the grid or in the full-screen viewer.
 
 ## Notifications

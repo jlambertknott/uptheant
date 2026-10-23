@@ -132,24 +132,30 @@ details[open] .chev{transform:rotate(180deg)}
 .gcard > .linkbtn{align-self:flex-start;margin:8px 12px 12px}
 .capedit{padding:10px 12px 12px;display:flex;flex-direction:column;gap:8px}
 .capedit input{width:100%;border:1px solid var(--line);border-radius:8px;padding:9px 10px;background:var(--bg)}
-#lightbox{position:fixed;inset:0;z-index:40;background:#0a1416;display:grid;place-items:center;touch-action:pan-y}
-#lightbox img{max-width:100vw;max-height:100dvh;width:auto;height:auto;display:block}
-.lbcap{position:absolute;left:0;right:0;bottom:0;padding:48px 20px calc(20px + env(safe-area-inset-bottom,0px));color:#F6FAF8;text-align:center;
-  background:linear-gradient(to top,rgba(6,16,18,.92),rgba(6,16,18,0));pointer-events:none}
-.lbcap b{font-family:var(--f-display);font-weight:400;font-size:22px;display:block;line-height:1.2}
-.lbcap span{font-family:var(--f-mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;opacity:.8}
-.lbx{position:absolute;top:calc(12px + env(safe-area-inset-top,0px));right:14px;width:44px;height:44px;border-radius:50%;border:0;background:rgba(255,255,255,.18);color:#fff;font-size:26px;line-height:1;z-index:2}
-.lbnav{position:absolute;top:50%;transform:translateY(-50%);width:46px;height:70px;border:0;border-radius:10px;background:rgba(255,255,255,.14);color:#fff;font-size:30px;line-height:1;z-index:2}
+/* full-screen photo viewer: a column, so the caption bar never sits on top of
+   the photo and the keyboard never sits on top of the bar (see fitViewer) */
+#lightbox{position:fixed;left:0;top:0;width:100%;height:100dvh;z-index:40;background:#0a1416;
+  display:flex;flex-direction:column;touch-action:pan-y;color:#F6FAF8}
+.lbstage{flex:1;min-height:0;position:relative;display:grid;place-items:center}
+.lbstage img{position:absolute;top:0;left:0;right:0;bottom:0;margin:auto;max-width:100%;max-height:100%;width:auto;height:auto;display:block}
+.lbx{position:absolute;top:calc(10px + env(safe-area-inset-top,0px));right:12px;width:44px;height:44px;
+  border-radius:50%;border:0;background:rgba(255,255,255,.18);color:#F6FAF8;font-size:26px;line-height:1;z-index:3}
+.lbcount{position:absolute;top:calc(20px + env(safe-area-inset-top,0px));left:18px;
+  font-family:var(--f-mono);font-size:12px;opacity:.8;z-index:3}
+.lbnav{position:absolute;top:50%;transform:translateY(-50%);width:46px;height:70px;border:0;border-radius:10px;
+  background:rgba(255,255,255,.14);color:#F6FAF8;font-size:30px;line-height:1;z-index:2}
 .lbnav.prev{left:8px}.lbnav.next{right:8px}
 .lbnav:disabled{opacity:.25}
-.lbcap{pointer-events:auto}
-#lightbox .lbcapbtn{margin-top:10px;background:rgba(255,255,255,.18);border-color:rgba(255,255,255,.28);color:#F6FAF8}
-.lbedit{position:absolute;left:0;right:0;top:0;z-index:3;display:flex;flex-direction:column;gap:10px;
-  padding:calc(66px + env(safe-area-inset-top,0px)) 16px 18px;background:linear-gradient(to bottom,rgba(6,16,18,.96),rgba(6,16,18,.82))}
-.lbedit input{width:100%;border:1px solid rgba(255,255,255,.3);border-radius:10px;padding:13px 14px;
+.lbbar{flex:none;padding:14px 16px calc(16px + env(safe-area-inset-bottom,0px));text-align:center;
+  background:#0a1416;border-top:1px solid rgba(255,255,255,.1);display:flex;flex-direction:column;gap:10px}
+.lbbar b{font-family:var(--f-display);font-weight:400;font-size:22px;line-height:1.2}
+.lbbar .meta{font-family:var(--f-mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;opacity:.75}
+.lbbar input{width:100%;border:1px solid rgba(255,255,255,.32);border-radius:10px;padding:13px 14px;
   background:rgba(255,255,255,.1);color:#F6FAF8;font-size:17px;font-family:inherit}
-.lbedit input::placeholder{color:rgba(246,250,248,.55)}
-.lbcount{position:absolute;top:calc(20px + env(safe-area-inset-top,0px));left:18px;color:#F6FAF8;font-family:var(--f-mono);font-size:12px;opacity:.8;z-index:2}
+.lbbar input::placeholder{color:rgba(246,250,248,.5)}
+.lbbar .row2{justify-content:center}
+#lightbox .lbbar .btn{background:rgba(255,255,255,.18);border-color:rgba(255,255,255,.28);color:#F6FAF8}
+#lightbox .lbbar .btn.primary{background:var(--river);border-color:var(--river);color:#fff}
 
 /* journal */
 .jform{display:flex;flex-direction:column;gap:10px}
@@ -1013,7 +1019,7 @@ $("#noti").onclick=e=>{
 /* ---------- ACROSS THE YEARS ---------- */
 /* Photos come from the photos/ folder in the repo; the publish workflow resizes
    them and writes photos.json. Captions are written here and shared live. */
-let PHOTOS=[],photosLoaded=false,G={},loadedG=false,capFor=null,capDraft="";
+let PHOTOS=[],photosLoaded=false,G={},loadedG=false,capDraft="";
 const keyFor=f=>String(f).replace(/[^A-Za-z0-9]+/g,"_");
 const photoUrl=(f,thumb)=>"photos/"+(thumb?"t/":"")+encodeURIComponent(f);   // filenames may contain spaces
 
@@ -1037,61 +1043,83 @@ function renderGallery(){
         ${c&&c.t?`<b>${esc(c.t)}</b><span class="by">${esc(c.by||"")}</span>`:`<span class="muted">No caption yet. Tap to add one.</span>`}</span>
     </button></figure>`;
   }).join("");
-  if(lbAt>=0&&!capFor)drawBig();
+  if(lbAt>=0&&!capEditing&&!$("#capIn"))drawBig();
 }
 $("#gal").onclick=e=>{
   const big=e.target.closest("[data-big]");
   if(big)openBig(big.dataset.big);          // captioning happens in the full-screen view
 };
-let lbAt=-1;
+let lbAt=-1,capEditing=false;
 function openBig(i){
   lbAt=Math.max(0,Math.min(PHOTOS.length-1,+i));
+  capEditing=false;capDraft=(G[keyFor(PHOTOS[lbAt].file)]||{}).t||"";
   document.body.style.overflow="hidden";
   drawBig();
 }
 function drawBig(){
   const p=PHOTOS[lbAt];if(!p)return closeBig();
-  const c=G[keyFor(p.file)],lb=$("#lightbox"),editing=capFor===p.file;
-  const line=[p.name,c&&c.by?"captioned by "+c.by:""].filter(Boolean).join(" · ");
-  lb.innerHTML=`<img src="${photoUrl(p.file)}" alt="${esc(p.name||"")}">
-    <span class="lbcount">${lbAt+1} / ${PHOTOS.length}</span>
-    <button class="lbx" data-lbx="1" aria-label="Close">&times;</button>
-    ${editing?`<div class="lbedit">
-        <input id="capIn" maxlength="120" placeholder="Something daft" value="${esc(capDraft)}" autocomplete="off">
-        <div class="row2"><button class="btn primary small" data-capsave="${esc(p.file)}">Save caption</button>
-        <button class="btn small" data-capx="1">Cancel</button></div>
-      </div>`
-    :`${PHOTOS.length>1?`<button class="lbnav prev" data-lbstep="-1" aria-label="Previous photo" ${lbAt===0?"disabled":""}>&lsaquo;</button>
+  const c=G[keyFor(p.file)],lb=$("#lightbox");
+  const has=!!(c&&c.t);
+  const editing=me&&(!has||capEditing);        // no caption yet? the box is there, ready
+  const meta=[p.name,has&&c.by?"captioned by "+c.by:""].filter(Boolean).join(" · ");
+  let bar;
+  if(editing){
+    bar=`<span class="meta">${esc(meta)}</span>
+      <input id="capIn" maxlength="120" placeholder="Give this one a caption" value="${esc(capDraft)}" autocomplete="off">
+      <div class="row2"><button class="btn primary small" data-capsave="${esc(p.file)}">${has?"Save caption":"Add caption"}</button>
+      ${has?`<button class="btn small" data-capx="1">Cancel</button>`:""}</div>`;
+  }else if(has){
+    bar=`<b>${esc(c.t)}</b><span class="meta">${esc(meta)}</span>
+      ${me?`<div class="row2"><button class="btn small" data-capedit="${esc(p.file)}">Change the caption</button></div>`:""}`;
+  }else{
+    bar=`<span class="meta">${esc(meta)}</span><span class="meta">Pick your name to add a caption</span>`;
+  }
+  lb.innerHTML=`<div class="lbstage">
+      <img src="${photoUrl(p.file)}" alt="${esc(p.name||"")}">
+      <span class="lbcount">${lbAt+1} / ${PHOTOS.length}</span>
+      <button class="lbx" data-lbx="1" aria-label="Close">&times;</button>
+      ${PHOTOS.length>1&&!editing?`<button class="lbnav prev" data-lbstep="-1" aria-label="Previous photo" ${lbAt===0?"disabled":""}>&lsaquo;</button>
       <button class="lbnav next" data-lbstep="1" aria-label="Next photo" ${lbAt===PHOTOS.length-1?"disabled":""}>&rsaquo;</button>`:""}
-      <div class="lbcap">${c&&c.t?`<b>${esc(c.t)}</b>`:""}<span>${esc(line)}</span>
-        <button class="btn small lbcapbtn" data-cap="${esc(p.file)}">${c&&c.t?"Change the caption":"Add a caption"}</button>
-      </div>`}`;
-  lb.hidden=false;
-  if(editing){const i=$("#capIn");if(i){i.focus();i.oninput=()=>{capDraft=i.value};
-    i.onkeydown=e=>{if(e.key==="Enter")lb.querySelector("[data-capsave]").click()}}}
+    </div>
+    <div class="lbbar">${bar}</div>`;
+  lb.hidden=false;fitViewer();
+  const i=$("#capIn");
+  if(i){i.oninput=()=>{capDraft=i.value};
+        i.onkeydown=e=>{if(e.key==="Enter"){e.preventDefault();lb.querySelector("[data-capsave]").click()}}}
 }
-function stepBig(d){const n=lbAt+d;if(n<0||n>=PHOTOS.length)return;lbAt=n;drawBig()}
-function closeBig(){lbAt=-1;$("#lightbox").hidden=true;$("#lightbox").innerHTML="";document.body.style.overflow=""}
+/* keep the viewer inside the visible area, so an open keyboard shrinks the
+   photo rather than covering the caption box */
+function fitViewer(){
+  const vv=window.visualViewport,lb=$("#lightbox");
+  if(!vv||lb.hidden)return;
+  lb.style.height=vv.height+"px";
+  lb.style.transform=`translateY(${vv.offsetTop}px)`;
+}
+if(window.visualViewport){
+  visualViewport.addEventListener("resize",fitViewer);
+  visualViewport.addEventListener("scroll",fitViewer);
+}
+function stepBig(d){const n=lbAt+d;if(n<0||n>=PHOTOS.length)return;lbAt=n;capEditing=false;capDraft="";drawBig()}
+function closeBig(){lbAt=-1;capEditing=false;capDraft="";const lb=$("#lightbox");
+  lb.hidden=true;lb.innerHTML="";lb.style.height="";lb.style.transform="";document.body.style.overflow=""}
 $("#lightbox").onclick=e=>{
   const st=e.target.closest("[data-lbstep]");
   if(st)return stepBig(+st.dataset.lbstep);
   if(e.target.closest("[data-lbx]"))return closeBig();
-  const add=e.target.closest("[data-cap]");
-  if(add){
-    if(!me){closeBig();toast("Pick your name first, then tap the photo again.");return}
-    capFor=add.dataset.cap;capDraft=(G[keyFor(capFor)]||{}).t||"";drawBig();return;
-  }
-  if(e.target.closest("[data-capx]")){capFor=null;capDraft="";drawBig();return}
+  const ed=e.target.closest("[data-capedit]");
+  if(ed){capEditing=true;capDraft=(G[keyFor(ed.dataset.capedit)]||{}).t||"";drawBig();$("#capIn").focus();return}
+  if(e.target.closest("[data-capx]")){capEditing=false;capDraft="";drawBig();return}
   const save=e.target.closest("[data-capsave]");
   if(save){
     const f=save.dataset.capsave,t=($("#capIn").value||"").trim();
-    capFor=null;capDraft="";
-    setDoc(REF.gallery,{[keyFor(f)]:t?{t,by:me,at:Date.now()}:deleteField()},{merge:true})
-      .then(()=>toast(t?"Caption saved. Everyone else gets a ping.":"Caption removed."))
+    if(!t)return $("#capIn").focus();
+    capEditing=false;capDraft=t;
+    setDoc(REF.gallery,{[keyFor(f)]:{t,by:me,at:Date.now()}},{merge:true})
+      .then(()=>toast("Caption saved. Everyone else gets a ping."))
       .catch(()=>toast("That didn't go through. Check your signal."));
     drawBig();renderGallery();return;
   }
-  if(e.target===$("#lightbox"))closeBig();   // only the backdrop itself closes
+  if(e.target.closest(".lbstage")&&e.target.tagName!=="IMG")closeBig();   // the space around the photo closes it
 };
 addEventListener("keydown",e=>{
   if($("#lightbox").hidden)return;
