@@ -1,7 +1,7 @@
 # Up the Ant: trip app
 
 A one-page web app for James's Norfolk Broads sailing trip with Jimmy, Anna, Pippa, Simon, Sally and Charly.
-Live site: https://jlambertknott.github.io/up-the-ant/
+Live site: https://jlambertknott.github.io/uptheant/
 
 James is not a developer. He asks for changes in plain English, often from his phone on the boat. Keep replies short, make the change, publish it, and tell him to refresh.
 
@@ -46,6 +46,7 @@ Question ids come from the round name plus question text, so editing a question 
 
 - Photos live in the `photos/` folder in the repo. James adds them through GitHub's "Add files via upload" (25 MB per file through the browser).
 - The **Publish site** workflow resizes each one into `_site/photos/` (long edge 1600) and `_site/photos/t/` (thumbnails, 700), and writes `_site/photos.json`, which is what the page reads. Nothing in `index.html` needs editing when a photo is added.
+- The resizing uses Pillow, installed by the workflow's shell *before* the Python that uses it starts. Don't move that install inside the Python script: a package installed into the user site directory mid-process isn't importable by that process. If Pillow can't be installed the photos are published at their original size rather than failing the build.
 - Name a file `01-whatever.jpg` to control the order; the number is stripped for the display name.
 - Captions are written in the app, not in the filename, and live in Firestore.
 
