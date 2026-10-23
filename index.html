@@ -119,9 +119,13 @@ details[open] .chev{transform:rotate(180deg)}
 /* gallery */
 .gal{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;align-items:start}
 .gcard{margin:0;border:1px solid var(--line);border-radius:12px;background:var(--surface);overflow:hidden;display:flex;flex-direction:column}
-.gimg{display:block;width:100%;padding:0;border:0;background:var(--river-soft);line-height:0}
-.gimg img{display:block;width:100%;height:auto}
-.gdate{font-family:var(--f-mono);font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);padding:9px 12px 0}
+.gcardbtn{display:block;width:100%;padding:0;border:0;background:none;text-align:left;line-height:0}
+.gcardbtn img{display:block;width:100%;height:auto;background:var(--river-soft)}
+.gmeta{display:block;padding:9px 12px 12px;line-height:1.35}
+.gdate{display:block;font-family:var(--f-mono);font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted)}
+.gmeta b{font-family:var(--f-display);font-weight:400;font-size:17px;display:block;margin-top:3px}
+.gmeta .by{font-family:var(--f-mono);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.gmeta .muted{font-size:14px;display:block;margin-top:3px}
 .gcard figcaption{padding:10px 12px 0;font-size:15px}
 .gcard figcaption b{font-family:var(--f-display);font-weight:400;font-size:18px;display:block;line-height:1.2}
 .gcard figcaption .by{font-family:var(--f-mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
@@ -138,6 +142,13 @@ details[open] .chev{transform:rotate(180deg)}
 .lbnav{position:absolute;top:50%;transform:translateY(-50%);width:46px;height:70px;border:0;border-radius:10px;background:rgba(255,255,255,.14);color:#fff;font-size:30px;line-height:1;z-index:2}
 .lbnav.prev{left:8px}.lbnav.next{right:8px}
 .lbnav:disabled{opacity:.25}
+.lbcap{pointer-events:auto}
+#lightbox .lbcapbtn{margin-top:10px;background:rgba(255,255,255,.18);border-color:rgba(255,255,255,.28);color:#F6FAF8}
+.lbedit{position:absolute;left:0;right:0;top:0;z-index:3;display:flex;flex-direction:column;gap:10px;
+  padding:calc(66px + env(safe-area-inset-top,0px)) 16px 18px;background:linear-gradient(to bottom,rgba(6,16,18,.96),rgba(6,16,18,.82))}
+.lbedit input{width:100%;border:1px solid rgba(255,255,255,.3);border-radius:10px;padding:13px 14px;
+  background:rgba(255,255,255,.1);color:#F6FAF8;font-size:17px;font-family:inherit}
+.lbedit input::placeholder{color:rgba(246,250,248,.55)}
 .lbcount{position:absolute;top:calc(20px + env(safe-area-inset-top,0px));left:18px;color:#F6FAF8;font-family:var(--f-mono);font-size:12px;opacity:.8;z-index:2}
 
 /* journal */
@@ -904,7 +915,7 @@ function animateTo(x){
     if(p<1)return requestAnimationFrame(step);
     rot=target%TAU;spinning=false;wheelNames=null;$("#spinBtn").disabled=false;
     pending=null;renderHelm();   // the wheel has stopped, so the log can show it now
-    if(x.by&&x.by!==me)
+    if(x.by&&x.by!==me&&isNew(x.t))
       notify(`<b>${esc(x.by)}</b> has spun the helm draw and it chose <b>${esc(x.n)}</b> as the next pilot`,"helm");
   })(t0);
 }
@@ -944,6 +955,8 @@ if(document.fonts)document.fonts.ready.then(drawWheel);
    logbook or spins the helm. Never fires for your own doing, and never for
    what was already there when you opened the page. */
 let notiQ=[],notiT=null,muted=lsGet("ant-mute",false),actx=null;
+const BOOT=Date.now()-120000;   // 2 minutes of slack for phones whose clocks disagree
+const isNew=t=>typeof t==="number"&&t>BOOT;
 
 function ping(){
   if(muted)return;
@@ -1017,29 +1030,18 @@ function renderGallery(){
   }
   el.innerHTML=PHOTOS.map((p,i)=>{
     const k=keyFor(p.file),c=G[k];
-    const body=capFor===p.file
-      ?`<div class="capedit"><input id="capIn" maxlength="120" placeholder="Something daft" value="${esc(capDraft)}"><div class="row2"><button class="btn primary small" data-capsave="${esc(p.file)}">Save</button><button class="btn small" data-capx="1">Cancel</button></div></div>`
-      :`<figcaption>${c&&c.t?`<b>${esc(c.t)}</b><span class="by">${esc(c.by||"")}</span>`:`<span class="muted">No caption yet</span>`}</figcaption>
-        <button class="linkbtn" data-cap="${esc(p.file)}">${c&&c.t?"Change the caption":"Add a caption"}</button>`;
     const ar=p.w&&p.h?`style="aspect-ratio:${p.w}/${p.h}"`:"";
-    return `<figure class="gcard"><button class="gimg" data-big="${i}"><img src="${photoUrl(p.file,1)}" alt="${esc(p.name||"")}" ${ar} loading="lazy"></button>
-      ${p.name?`<div class="gdate">${esc(p.name)}</div>`:""}${body}</figure>`;
+    return `<figure class="gcard"><button class="gcardbtn" data-big="${i}">
+      <img src="${photoUrl(p.file,1)}" alt="${esc(p.name||"")}" ${ar} loading="lazy">
+      <span class="gmeta">${p.name?`<span class="gdate">${esc(p.name)}</span>`:""}
+        ${c&&c.t?`<b>${esc(c.t)}</b><span class="by">${esc(c.by||"")}</span>`:`<span class="muted">No caption yet. Tap to add one.</span>`}</span>
+    </button></figure>`;
   }).join("");
-  const i=$("#capIn");if(i){i.focus();i.oninput=()=>{capDraft=i.value}}
+  if(lbAt>=0&&!capFor)drawBig();
 }
 $("#gal").onclick=e=>{
-  const big=e.target.closest("[data-big]");if(big)return openBig(big.dataset.big);
-  const add=e.target.closest("[data-cap]");
-  if(add){if(!me)return toast("Pick your name first.");capFor=add.dataset.cap;capDraft=(G[keyFor(capFor)]||{}).t||"";renderGallery();return}
-  if(e.target.closest("[data-capx]")){capFor=null;capDraft="";renderGallery();return}
-  const save=e.target.closest("[data-capsave]");
-  if(save){
-    const f=save.dataset.capsave,t=($("#capIn").value||"").trim();
-    capFor=null;capDraft="";
-    setDoc(REF.gallery,{[keyFor(f)]:t?{t,by:me,at:Date.now()}:deleteField()},{merge:true})
-      .catch(()=>toast("That didn't go through. Check your signal."));
-    renderGallery();
-  }
+  const big=e.target.closest("[data-big]");
+  if(big)openBig(big.dataset.big);          // captioning happens in the full-screen view
 };
 let lbAt=-1;
 function openBig(i){
@@ -1049,15 +1051,24 @@ function openBig(i){
 }
 function drawBig(){
   const p=PHOTOS[lbAt];if(!p)return closeBig();
-  const c=G[keyFor(p.file)],lb=$("#lightbox");
+  const c=G[keyFor(p.file)],lb=$("#lightbox"),editing=capFor===p.file;
   const line=[p.name,c&&c.by?"captioned by "+c.by:""].filter(Boolean).join(" · ");
   lb.innerHTML=`<img src="${photoUrl(p.file)}" alt="${esc(p.name||"")}">
     <span class="lbcount">${lbAt+1} / ${PHOTOS.length}</span>
     <button class="lbx" data-lbx="1" aria-label="Close">&times;</button>
-    ${PHOTOS.length>1?`<button class="lbnav prev" data-lbstep="-1" aria-label="Previous photo" ${lbAt===0?"disabled":""}>&lsaquo;</button>
-    <button class="lbnav next" data-lbstep="1" aria-label="Next photo" ${lbAt===PHOTOS.length-1?"disabled":""}>&rsaquo;</button>`:""}
-    <div class="lbcap">${c&&c.t?`<b>${esc(c.t)}</b>`:""}<span>${esc(line)}</span></div>`;
+    ${editing?`<div class="lbedit">
+        <input id="capIn" maxlength="120" placeholder="Something daft" value="${esc(capDraft)}" autocomplete="off">
+        <div class="row2"><button class="btn primary small" data-capsave="${esc(p.file)}">Save caption</button>
+        <button class="btn small" data-capx="1">Cancel</button></div>
+      </div>`
+    :`${PHOTOS.length>1?`<button class="lbnav prev" data-lbstep="-1" aria-label="Previous photo" ${lbAt===0?"disabled":""}>&lsaquo;</button>
+      <button class="lbnav next" data-lbstep="1" aria-label="Next photo" ${lbAt===PHOTOS.length-1?"disabled":""}>&rsaquo;</button>`:""}
+      <div class="lbcap">${c&&c.t?`<b>${esc(c.t)}</b>`:""}<span>${esc(line)}</span>
+        <button class="btn small lbcapbtn" data-cap="${esc(p.file)}">${c&&c.t?"Change the caption":"Add a caption"}</button>
+      </div>`}`;
   lb.hidden=false;
+  if(editing){const i=$("#capIn");if(i){i.focus();i.oninput=()=>{capDraft=i.value};
+    i.onkeydown=e=>{if(e.key==="Enter")lb.querySelector("[data-capsave]").click()}}}
 }
 function stepBig(d){const n=lbAt+d;if(n<0||n>=PHOTOS.length)return;lbAt=n;drawBig()}
 function closeBig(){lbAt=-1;$("#lightbox").hidden=true;$("#lightbox").innerHTML="";document.body.style.overflow=""}
@@ -1065,7 +1076,22 @@ $("#lightbox").onclick=e=>{
   const st=e.target.closest("[data-lbstep]");
   if(st)return stepBig(+st.dataset.lbstep);
   if(e.target.closest("[data-lbx]"))return closeBig();
-  if(e.target.tagName!=="IMG")closeBig();            // tapping the backdrop closes, the photo doesn't
+  const add=e.target.closest("[data-cap]");
+  if(add){
+    if(!me){closeBig();toast("Pick your name first, then tap the photo again.");return}
+    capFor=add.dataset.cap;capDraft=(G[keyFor(capFor)]||{}).t||"";drawBig();return;
+  }
+  if(e.target.closest("[data-capx]")){capFor=null;capDraft="";drawBig();return}
+  const save=e.target.closest("[data-capsave]");
+  if(save){
+    const f=save.dataset.capsave,t=($("#capIn").value||"").trim();
+    capFor=null;capDraft="";
+    setDoc(REF.gallery,{[keyFor(f)]:t?{t,by:me,at:Date.now()}:deleteField()},{merge:true})
+      .then(()=>toast(t?"Caption saved. Everyone else gets a ping.":"Caption removed."))
+      .catch(()=>toast("That didn't go through. Check your signal."));
+    drawBig();renderGallery();return;
+  }
+  if(e.target===$("#lightbox"))closeBig();   // only the backdrop itself closes
 };
 addEventListener("keydown",e=>{
   if($("#lightbox").hidden)return;
@@ -1195,7 +1221,7 @@ onSnapshot(REF.gallery,opts,s=>{
   if(seenCaps===null)seenCaps=Object.fromEntries(Object.keys(G).map(k=>[k,(G[k]||{}).at||0]));
   else Object.keys(G).forEach(k=>{
     const c=G[k]||{},was=seenCaps[k]||0;
-    if(c.at&&c.at>was&&c.by&&c.by!==me)
+    if(c.at&&c.at>was&&isNew(c.at)&&c.by&&c.by!==me)
       notify(`<b>${esc(c.by)}</b> has just added a caption: &ldquo;${esc(c.t||"")}&rdquo;`,"years");
     seenCaps[k]=c.at||0;
   });
@@ -1210,11 +1236,11 @@ onSnapshot(REF.journal,opts,s=>{
   else Object.keys(E).forEach(id=>{
     const e=E[id]||{};
     if(!(id in seenEntries)){
-      if(e.by&&e.by!==me)
+      if(e.by&&e.by!==me&&isNew(e.at))
         notify(`<b>${esc(e.by)}</b> has added a new logbook entry called &ldquo;${esc(e.title||"Untitled")}&rdquo;`,"journal");
     }else if(count(id)>seenEntries[id]){
       const last=(e.comments||[])[count(id)-1]||{};
-      if(last.by&&last.by!==me)
+      if(last.by&&last.by!==me&&isNew(last.at))
         notify(`<b>${esc(last.by)}</b> commented on &ldquo;${esc(e.title||"Untitled")}&rdquo;`,"journal");
     }
     seenEntries[id]=count(id);
