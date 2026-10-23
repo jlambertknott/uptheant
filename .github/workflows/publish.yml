@@ -1,0 +1,46 @@
+name: Publish site
+
+on:
+  push:
+    branches: ['**']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: publish
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    if: github.ref_name != 'gh-pages'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up git
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "41898283+github-actions[bot]@users.noreply.github.com"
+
+      - name: Bring this branch's changes onto main
+        if: github.ref_name != 'main'
+        run: |
+          git checkout main
+          git merge --no-edit -X theirs "origin/${GITHUB_REF_NAME}"
+          git push origin main
+
+      - name: Publish main to the gh-pages branch
+        run: |
+          git checkout main
+          rm -rf /tmp/site && mkdir -p /tmp/site
+          cp index.html /tmp/site/
+          touch /tmp/site/.nojekyll
+          cd /tmp/site
+          git init -q -b gh-pages
+          git add -A
+          git commit -qm "Publish ${GITHUB_SHA::7}"
+          git push -f "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" gh-pages
