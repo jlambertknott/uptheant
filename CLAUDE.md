@@ -48,7 +48,7 @@ Question ids come from the round name plus question text, so editing a question 
 - The **Publish site** workflow resizes each one into `_site/photos/` (long edge 1600) and `_site/photos/t/` (thumbnails, 700), and writes `_site/photos.json`, which is what the page reads. Nothing in `index.html` needs editing when a photo is added.
 - The resizing uses Pillow, installed by the workflow's shell *before* the Python that uses it starts. Don't move that install inside the Python script: a package installed into the user site directory mid-process isn't importable by that process. If Pillow can't be installed the photos are published at their original size rather than failing the build.
 - Name a file `01-whatever.jpg` to control the order; the number is stripped for the display name.
-- Captions are written in the app, not in the filename, and live in Firestore. Each photo's date is taken from its filename and shown under it.
+- Captions are written in the full-screen view (tap a photo), not on the grid, and live in Firestore. Each photo's date is taken from its filename and shown under it.
 - `photos.json` carries `w`/`h` for each photo so the grid can reserve the right shape: photos are never cropped, in the grid or in the full-screen viewer.
 
 ## Notifications
@@ -56,7 +56,7 @@ Question ids come from the round name plus question text, so editing a question 
 A banner drops from the top of any tab, with a ping, when somebody *else* captions a photo, posts a logbook entry, comments, or spins the helm. Three rules keep it from being maddening:
 
 - Never for your own action (compare `by` against `me`).
-- Never for what was already there: the first snapshot of each document only records a baseline (`seenCaps`, `seenEntries`, and `lastSpin` for the helm).
+- Never for what was already there. Each document's first snapshot records a baseline (`seenCaps`, `seenEntries`, `lastSpin`), and on top of that `isNew()` ignores anything timestamped before this phone opened the app. Both are needed: with offline caching the first snapshot can arrive empty from the cache, so the baseline alone would announce every caption when the server's copy lands.
 - The helm banner waits for the wheel to stop, so it can't give the result away.
 
 The ping is generated with the Web Audio API rather than an audio file, and browsers only allow it after a tap, so the audio context is woken on the first `pointerdown`. The speaker button in the banner mutes it per phone (`ant-mute`); the banner still appears when muted.
