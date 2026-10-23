@@ -345,7 +345,7 @@ import { initializeFirestore, getFirestore, persistentLocalCache, persistentMult
 /* =====================================================================
    SETTINGS: crew, host PIN and Firebase connection
    ===================================================================== */
-const CREW = ["Jimmy","Anna","Pippa","Simon","Sally","Charly"];
+const CREW = ["Jimmy","Pippa","Anna","Charly","Sally","Simon"];
 const HOST_PIN = "2026";
 const firebaseConfig = {
   apiKey: "AIzaSyDk2yleT9q1mvtBn5VuSHCTbGEXLL3i9WY",
@@ -721,6 +721,7 @@ function renderQuiz(){renderWho();renderStage();renderHost();renderBoard();rende
 /* ---------- HELM ---------- */
 const cv=$("#wheel"),ctx=cv.getContext("2d");
 let rot=0,spinning=false,lastSpin=undefined,wheelNames=null;
+let pending=null;   // id of the draw the wheel is still spinning towards: kept out of the log until it lands
 const onDuty=()=>CREW.filter(n=>!H.off.includes(n));
 function drawWheel(){
   const names=wheelNames||onDuty(),W=cv.width,c=W/2,rad=c-8,seg=Math.PI*2/Math.max(names.length,1);
@@ -747,16 +748,19 @@ function resultHtml(x){
 }
 function renderHelm(){
   if(!loaded.helm)return;
-  const log=[...H.log].reverse();
+  const all=[...H.log].reverse(),top=all[0];
+  const fresh=lastSpin!==undefined&&top&&top.id!==lastSpin;
+  if(fresh)pending=top.id;
+  // hide the new name from the log and tally until the wheel has finished turning
+  const log=pending?all.filter(x=>x.id!==pending):all;
   $("#crew").innerHTML=CREW.map((n,i)=>`<button aria-pressed="${!H.off.includes(n)}" data-c="${esc(n)}"><span class="sw" style="background:var(${CREW_TOK[i%CREW_TOK.length]})"></span>${esc(n)}</button>`).join("");
   $("#fair").checked=H.fair;
   const counts=Object.fromEntries(CREW.map(n=>[n,0]));log.forEach(x=>{if(counts[x.n]!=null)counts[x.n]++});
   $("#tally").innerHTML=log.length?CREW.map(n=>`<span>${esc(n)} <b>${counts[n]}</b></span>`).join(""):"";
   $("#log").innerHTML=log.length?log.slice(0,20).map(x=>`<li><span>${esc(x.n)}</span><time>${fmt(x.t)}</time></li>`).join(""):`<li class="muted">No draws yet.</li>`;
   $("#logReset").innerHTML=isHost&&log.length?`<button class="btn small" id="clearHelm">Clear helm log</button>`:"";
-  const top=log[0];
-  if(lastSpin===undefined){lastSpin=top?top.id:null;$("#result").innerHTML=resultHtml(top);drawWheel();return}
-  if(top&&top.id!==lastSpin){lastSpin=top.id;animateTo(top);return}
+  if(lastSpin===undefined){lastSpin=top?top.id:null;pending=null;$("#result").innerHTML=resultHtml(top);drawWheel();return}
+  if(fresh){lastSpin=top.id;animateTo(top);return}
   if(!spinning){$("#result").innerHTML=resultHtml(top);drawWheel()}
 }
 function animateTo(x){
@@ -771,7 +775,7 @@ function animateTo(x){
     rot=from+(target-from)*e;drawWheel();
     if(p<1)return requestAnimationFrame(step);
     rot=target%TAU;spinning=false;wheelNames=null;$("#spinBtn").disabled=false;
-    $("#result").innerHTML=resultHtml(x);drawWheel();
+    pending=null;renderHelm();   // the wheel has stopped, so the log can show it now
   })(t0);
 }
 $("#spinBtn").onclick=async()=>{
