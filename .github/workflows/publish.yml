@@ -51,41 +51,66 @@ jobs:
 
           # Photos for the Across the Years tab. Anything dropped into photos/
           # gets resized here: a big one for tapping on and a thumbnail for the
-          # grid. photos.json tells the page what's there. Pillow is only
-          # fetched when there are actually photos to process.
+          # grid. photos.json tells the page what's there.
+          #
+          # Pillow is installed here, in the shell, rather than from inside the
+          # script below: a freshly installed package isn't importable by a
+          # Python process that was already running when it was installed.
+          shopt -s nullglob nocaseglob
+          found=(photos/*.jpg photos/*.jpeg photos/*.png photos/*.webp)
+          echo "${#found[@]} photo file(s) in photos/"
+          if [ ${#found[@]} -gt 0 ] && ! python3 -c 'import PIL' 2>/dev/null; then
+            python3 -m pip install --quiet --disable-pip-version-check Pillow \
+              || python3 -m pip install --quiet --disable-pip-version-check --break-system-packages Pillow \
+              || echo "could not install Pillow; falling back to copying the originals"
+          fi
+
           python3 - <<'PY'
-          import glob, json, os, re, subprocess, sys
+          import datetime, glob, json, os, re, shutil
+
+          try:
+              from PIL import Image, ImageOps
+          except ImportError:
+              Image = None
+
+          def display_name(stem):
+              m = re.search(r"(20\d{2})-(\d{2})-(\d{2})", stem)      # PHOTO-2024-09-21-10-13-55
+              if m:
+                  try:
+                      d = datetime.date(int(m[1]), int(m[2]), int(m[3]))
+                      return f"{d.day} {d:%B %Y}"
+                  except ValueError:
+                      pass
+              return re.sub(r"[-_]+", " ", re.sub(r"^[0-9]+[-_ ]*", "", stem)).strip() or stem
 
           src = [f for f in sorted(glob.glob("photos/*"))
                  if os.path.splitext(f)[1].lower() in (".jpg", ".jpeg", ".png", ".webp")]
-          if src:
-              try:
-                  from PIL import Image, ImageOps
-              except ImportError:
-                  subprocess.check_call([sys.executable, "-m", "pip", "install", "--quiet", "Pillow"])
-                  from PIL import Image, ImageOps
-
           out, used = [], set()
           for f in src:
               stem = os.path.splitext(os.path.basename(f))[0]
               slug, n = stem, 2
-              while slug.lower() in used:              # two photos sharing a name
+              while slug.lower() in used:                            # two photos sharing a name
                   slug, n = f"{stem}-{n}", n + 1
               used.add(slug.lower())
-              try:
-                  im = ImageOps.exif_transpose(Image.open(f)).convert("RGB")
-              except Exception as e:
-                  print("skipped", f, e)
-                  continue
-              big = im.copy(); big.thumbnail((1600, 1600), Image.LANCZOS)
-              big.save(f"_site/photos/{slug}.jpg", quality=82, optimize=True, progressive=True)
-              th = im.copy(); th.thumbnail((700, 700), Image.LANCZOS)
-              th.save(f"_site/photos/t/{slug}.jpg", quality=78, optimize=True)
-              name = re.sub(r"[-_]+", " ", re.sub(r"^[0-9]+[-_ ]*", "", stem)).strip() or stem
-              out.append({"file": slug + ".jpg", "name": name})
+              if Image:
+                  try:
+                      im = ImageOps.exif_transpose(Image.open(f)).convert("RGB")
+                  except Exception as e:
+                      print("skipped", f, e)
+                      continue
+                  big = im.copy(); big.thumbnail((1600, 1600), Image.LANCZOS)
+                  big.save(f"_site/photos/{slug}.jpg", quality=82, optimize=True, progressive=True)
+                  th = im.copy(); th.thumbnail((700, 700), Image.LANCZOS)
+                  th.save(f"_site/photos/t/{slug}.jpg", quality=78, optimize=True)
+                  out.append({"file": slug + ".jpg", "name": display_name(stem)})
+              else:
+                  ext = os.path.splitext(f)[1].lower()               # last resort: publish as-is
+                  shutil.copyfile(f, f"_site/photos/{slug}{ext}")
+                  shutil.copyfile(f, f"_site/photos/t/{slug}{ext}")
+                  out.append({"file": slug + ext, "name": display_name(stem)})
 
           json.dump(out, open("_site/photos.json", "w"))
-          print(len(out), "photos published")
+          print(len(out), "photos published", "(originals, not resized)" if not Image else "")
           PY
 
       - uses: actions/upload-pages-artifact@v3
