@@ -30,6 +30,16 @@ All content is near the top of the `<script type="module">` block:
   - `f`: a fun fact shown after the reveal (can be "").
 - The windy-day note, glossary and page titles are plain HTML above the script.
 
+## Pictures
+
+The drawings are hand-made SVG, not photos, so there are no image files to upload and nothing extra to download on a bad signal.
+
+- They live in one `<svg class="sprite">` block at the very top of `<body>`, one `<symbol>` per drawing.
+- The Route tab's banner is `art-hero`. Each stop names its drawing in its `art` field (`art-wroxham`, `art-horning`, `art-stbenets`, `art-antmouth`, `art-howhill`, `art-irstead`, `art-barton`, `art-neatishead`, `art-stalham`); a stop with no `art` field simply shows no picture.
+- Every colour is a CSS variable starting `--a-` (set twice at the top of the stylesheet: once for light mode, once for dark), so the drawings follow the phone's theme. Never hard-code a colour inside a symbol.
+- Each `<symbol>` has `viewBox="0 0 640 200"` (the hero is `0 0 640 260`) and the CSS pins the same aspect ratio, so nothing is ever cropped. If you add a drawing, match that viewBox.
+- They were drawn with a generator script rather than by hand; it isn't in the repo, so edit the SVG directly or redraw.
+
 Question ids come from the round name plus question text, so editing a question that has already been asked mid-quiz detaches the answers to it. Avoid editing questions during a live quiz unless James asks.
 
 ## Live data (Firebase Firestore)
